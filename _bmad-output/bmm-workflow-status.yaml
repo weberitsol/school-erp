@@ -1,0 +1,45 @@
+# BMM Workflow Status
+# This tracks progress through BMM methodology Analysis, Planning, and Solutioning phases.
+# Implementation phase is tracked separately in sprint-status.yaml
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2025-12-18"
+project: "school-erp"
+project_type: "software"
+selected_track: "method"
+field_type: "brownfield"
+workflow_path: "method-brownfield.yaml"
+
+workflow_status:
+  # Prerequisite - Documentation (conditional: if undocumented)
+  document-project: optional
+
+  # Phase 0 - Discovery (Optional)
+  brainstorm-project: optional
+  research: optional
+  product-brief: optional
+
+  # Phase 1 - Planning
+  prd: "_bmad-output/school-erp-prd.md"
+  create-ux-design: "_bmad-output/mobile-app-wireframes.md"
+
+  # Phase 2 - Solutioning
+  create-architecture: "_bmad-output/architecture.md"
+  create-epics-and-stories: "_bmad-output/epics.md"
+  test-design: recommended
+  validate-architecture: optional
+  implementation-readiness: "_bmad-output/implementation-readiness-report.md"
+
+  # Phase 3 - Implementation
+  sprint-planning: "_bmad-output/implementation-artifacts/sprint-status.yaml"

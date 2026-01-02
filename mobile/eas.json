@@ -1,0 +1,52 @@
+{
+  "cli": {
+    "version": ">= 7.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "student": {
+      "env": {
+        "APP_VARIANT": "student"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "teacher": {
+      "env": {
+        "APP_VARIANT": "teacher"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "parent": {
+      "env": {
+        "APP_VARIANT": "parent"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "admin": {
+      "env": {
+        "APP_VARIANT": "admin"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

@@ -1,0 +1,6 @@
+admissionNo,firstName,lastName,email,dateOfBirth,gender,password,rollNo,phone,classCode,sectionName,address,city,state,pincode
+STU001,John,Doe,john.doe@school.com,2010-05-15,MALE,,1,9876543210,,,123 Main St,Mumbai,Maharashtra,400001
+STU002,Jane,Smith,jane.smith@school.com,2010-08-22,FEMALE,,2,9876543211,,,456 Oak Ave,Mumbai,Maharashtra,400002
+STU003,Mike,Johnson,mike.johnson@school.com,2010-03-10,MALE,,3,9876543212,,,789 Pine Rd,Delhi,Delhi,110001
+STU004,Emily,Brown,emily.brown@school.com,2010-11-05,FEMALE,,4,9876543213,,,321 Elm St,Bangalore,Karnataka,560001
+STU005,David,Wilson,david.wilson@school.com,2010-07-18,MALE,,5,9876543214,,,654 Maple Dr,Chennai,Tamil Nadu,600001
