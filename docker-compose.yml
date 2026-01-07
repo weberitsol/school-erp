@@ -92,19 +92,20 @@ services:
       dockerfile: Dockerfile
     container_name: school-erp-frontend
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       NEXT_PUBLIC_API_URL: http://localhost:5000
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
     depends_on:
       - backend
     networks:
       - school-erp-network
-    command: npm run dev
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
 
   # Adminer (Database Management UI)
   adminer:

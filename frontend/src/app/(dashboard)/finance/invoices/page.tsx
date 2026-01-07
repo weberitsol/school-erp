@@ -100,8 +100,8 @@ export default function InvoicesPage() {
       });
 
       if (res.success && res.data) {
-        setInvoices(res.data);
-        setTotal(res.total || 0);
+        setInvoices(res.data.data || []);
+        setTotal(res.data.total || 0);
       }
     } catch (error) {
       console.error('Error fetching invoices:', error);
@@ -148,6 +148,7 @@ export default function InvoicesPage() {
       if (formData.bulkGenerate) {
         const res = await financeApi.bulkGenerateInvoices(accessToken, {
           classId: formData.classId,
+          feeStructureIds: formData.feeStructureIds,
           dueDate: formData.dueDate,
           discount: formData.discount ? parseFloat(formData.discount) : 0,
         });
@@ -217,9 +218,7 @@ export default function InvoicesPage() {
     if (!accessToken) return;
     setIsLoading(true);
     try {
-      const res = await financeApi.updateInvoiceStatus(invoiceId, accessToken, {
-        status: 'PAID',
-      });
+      const res = await financeApi.updateInvoiceStatus(invoiceId, accessToken, 'PAID');
 
       if (res.success) {
         toast({

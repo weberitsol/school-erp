@@ -13,6 +13,28 @@ interface RequestOptions extends RequestInit {
   token?: string;
 }
 
+/**
+ * Builds a query string from an object of parameters
+ * Filters out null/undefined values and encodes special characters
+ */
+function buildQueryString(params?: Record<string, any>): string {
+  if (!params || Object.keys(params).length === 0) {
+    return '';
+  }
+
+  const queryParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    // Skip null and undefined values
+    if (value !== null && value !== undefined && value !== '') {
+      queryParams.append(key, String(value));
+    }
+  });
+
+  const queryString = queryParams.toString();
+  return queryString ? `?${queryString}` : '';
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -60,16 +82,23 @@ class ApiClient {
     }
   }
 
-  async get<T>(endpoint: string, token?: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'GET', token });
+  async get<T>(
+    endpoint: string,
+    token?: string,
+    params?: Record<string, any>
+  ): Promise<ApiResponse<T>> {
+    const queryString = buildQueryString(params);
+    return this.request<T>(`${endpoint}${queryString}`, { method: 'GET', token });
   }
 
   async post<T>(
     endpoint: string,
     body: any,
-    token?: string
+    token?: string,
+    params?: Record<string, any>
   ): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
+    const queryString = buildQueryString(params);
+    return this.request<T>(`${endpoint}${queryString}`, {
       method: 'POST',
       body: JSON.stringify(body),
       token,
@@ -79,9 +108,11 @@ class ApiClient {
   async put<T>(
     endpoint: string,
     body: any,
-    token?: string
+    token?: string,
+    params?: Record<string, any>
   ): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
+    const queryString = buildQueryString(params);
+    return this.request<T>(`${endpoint}${queryString}`, {
       method: 'PUT',
       body: JSON.stringify(body),
       token,
@@ -91,17 +122,24 @@ class ApiClient {
   async patch<T>(
     endpoint: string,
     body: any,
-    token?: string
+    token?: string,
+    params?: Record<string, any>
   ): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
+    const queryString = buildQueryString(params);
+    return this.request<T>(`${endpoint}${queryString}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
       token,
     });
   }
 
-  async delete<T>(endpoint: string, token?: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE', token });
+  async delete<T>(
+    endpoint: string,
+    token?: string,
+    params?: Record<string, any>
+  ): Promise<ApiResponse<T>> {
+    const queryString = buildQueryString(params);
+    return this.request<T>(`${endpoint}${queryString}`, { method: 'DELETE', token });
   }
 }
 
@@ -3606,7 +3644,6 @@ export interface FeeStructure {
   academicYearId: string;
   classId?: string;
   class?: Class;
-  academicYear?: AcademicYear;
   amount: number;
   frequency: string; // Monthly, Quarterly, Annually, One-time
   dueDay?: number;
@@ -3635,7 +3672,6 @@ export interface FeePayment {
   paymentDate?: string;
   transactionId?: string;
   paidById?: string;
-  paidBy?: Parent;
   forMonth?: string;
   remarks?: string;
   createdAt: string;
@@ -3658,7 +3694,6 @@ export interface FeeInvoice {
   id: string;
   invoiceNo: string;
   schoolId: string;
-  school?: School;
   studentId: string;
   student?: Student;
   lineItems?: InvoiceLineItem[];

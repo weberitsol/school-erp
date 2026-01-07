@@ -22,6 +22,8 @@ const nextConfig = {
     if (isServer) {
       config.externals = [...(config.externals || []), 'canvas'];
     }
+    // Disable webpack cache to prevent ENOMEM errors in memory-constrained environments
+    config.cache = false;
     return config;
   },
 };

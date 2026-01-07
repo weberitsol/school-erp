@@ -93,10 +93,11 @@ export default function PaymentsPage() {
     if (!accessToken) return;
     setIsLoading(true);
     try {
-      const res = await financeApi.getPaymentReport(accessToken, {
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
-      });
+      const res = await financeApi.getPaymentReport(
+        accessToken,
+        dateFrom || '',
+        dateTo || ''
+      );
 
       if (res.success && res.data) {
         setPaymentReport(res.data);
@@ -118,8 +119,8 @@ export default function PaymentsPage() {
     try {
       const res = await financeApi.getPayments(accessToken, {
         search: searchTerm || undefined,
-        status: statusFilter || undefined,
-        method: methodFilter || undefined,
+        paymentStatus: statusFilter || undefined,
+        paymentMethod: methodFilter || undefined,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
         page,
@@ -127,8 +128,8 @@ export default function PaymentsPage() {
       });
 
       if (res.success && res.data) {
-        setPayments(res.data);
-        setTotal(res.total || 0);
+        setPayments(res.data.data || []);
+        setTotal(res.data.total || 0);
       }
     } catch (error) {
       console.error('Error fetching payments:', error);
@@ -197,7 +198,7 @@ export default function PaymentsPage() {
         studentId: formData.studentId,
         feeStructureId: formData.feeStructureId,
         amount: parseFloat(formData.amount),
-        paymentMethod: formData.paymentMethod,
+        paymentMethod: formData.paymentMethod as 'CASH' | 'CARD' | 'UPI' | 'BANK_TRANSFER' | 'CHEQUE' | 'ONLINE',
         transactionId: formData.transactionId || undefined,
         paymentDate: formData.paymentDate,
         discount: formData.discount ? parseFloat(formData.discount) : 0,

@@ -80,8 +80,8 @@ export default function FeeStructurePage() {
         limit: 10,
       });
       if (res.success && res.data) {
-        setFeeStructures(res.data);
-        setTotal(res.total || 0);
+        setFeeStructures(res.data.data || []);
+        setTotal(res.data.total || 0);
       }
     } catch (error) {
       console.error('Error fetching fee structures:', error);

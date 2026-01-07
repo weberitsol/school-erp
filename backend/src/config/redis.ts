@@ -69,8 +69,18 @@ class RedisClient {
         this.isAvailable = false;
       });
 
-      // Attempt connection (lazyConnect is true, so we need to call connect)
-      await this.client.connect();
+      // Attempt connection with timeout (lazyConnect is true, so we need to call connect)
+      const connectionTimeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Redis connection timeout')), 2000)
+      );
+
+      try {
+        await Promise.race([this.client.connect(), connectionTimeout]);
+      } catch (timeoutError) {
+        console.warn(`⚠️ Redis connection timeout (5s)`);
+        console.warn('📝 App will continue without caching (graceful degradation)');
+        // Don't throw - allow app to continue without Redis
+      }
 
     } catch (error) {
       const err = error as Error;

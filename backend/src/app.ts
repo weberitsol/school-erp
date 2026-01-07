@@ -185,8 +185,15 @@ const PORT = process.env.PORT || 5000;
 let io: SocketIOServer;
 
 const startServer = async () => {
-  // Initialize Redis connection (graceful degradation if unavailable)
-  await redis.connect();
+  // Initialize Redis connection in background (graceful degradation if unavailable)
+  // Fire and forget - don't block server startup
+  setImmediate(async () => {
+    try {
+      await redis.connect();
+    } catch (err) {
+      console.warn('Background Redis connection error:', err);
+    }
+  });
 
   // Create HTTP server (required for Socket.IO)
   const httpServer = createServer(app);

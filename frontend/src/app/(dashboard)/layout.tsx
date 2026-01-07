@@ -19,22 +19,20 @@ export default function DashboardLayout({
 
   useEffect(() => {
     setMounted(true);
-    // Wait for Zustand hydration from localStorage
-    const unsubscribe = useAuthStore.subscribe(
-      (state) => state.isAuthenticated,
-      () => {
-        setHydrated(true);
-      },
-      {
-        equalityFn: (a, b) => a === b,
-      }
-    );
-
-    // Also check if store is already hydrated
+    // Check if store is already hydrated from localStorage
     const state = useAuthStore.getState();
     if (state.accessToken) {
       setHydrated(true);
     }
+
+    // Subscribe to future auth changes
+    const unsubscribe = useAuthStore.subscribe(
+      (state) => {
+        if (state.accessToken) {
+          setHydrated(true);
+        }
+      }
+    );
 
     return unsubscribe;
   }, []);
