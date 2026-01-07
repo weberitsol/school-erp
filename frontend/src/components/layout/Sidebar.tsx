@@ -143,15 +143,19 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    label: 'Transport',
-    href: '/transport',
-    icon: Bus,
-    roles: ['ADMIN', 'PARENT'],
-  },
-  {
     label: 'Library',
     href: '/library',
     icon: Library,
+  },
+  {
+    label: 'Transportation',
+    icon: Bus,
+    roles: ['ADMIN'],
+    children: [
+      { label: 'Routes', href: '/admin/transportation/routes' },
+      { label: 'Vehicles', href: '/admin/transportation/vehicles' },
+      { label: 'Drivers', href: '/admin/transportation/drivers' },
+    ],
   },
   {
     label: 'Practice MCQs',
@@ -205,6 +209,7 @@ const navItems: NavItem[] = [
       { label: 'Assessment Reasons', href: '/admin/assessment-reasons' },
       { label: 'Tasks', href: '/admin/tasks' },
       { label: 'Manage Videos', href: '/admin/videos' },
+      { label: 'Upload Word Tests', href: '/admin/test-upload' },
     ],
   },
   {
