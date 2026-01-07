@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle, AlertCircle, Download, Sync, TrendingUp, Calendar } from 'lucide-react';
+import { CheckCircle, AlertCircle, Download, RefreshCw, TrendingUp, Calendar } from 'lucide-react';
 
 interface AttendanceRecord {
   id: string;
@@ -103,7 +103,7 @@ export default function AttendanceIntegrationPage() {
     alert(`Exporting attendance data as ${format.toUpperCase()}...`);
   };
 
-  const pendingSyncs = syncHistory.filter((s) => s.status === 'SYNC_PENDING').length;
+  const pendingSyncs = syncHistory.filter((s) => s.status === 'PENDING').length;
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -258,7 +258,7 @@ export default function AttendanceIntegrationPage() {
                 disabled={syncingId !== null || pendingSyncs === 0}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                <Sync className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4" />
                 {syncingId === 'all' ? 'Syncing...' : 'Sync All'}
               </button>
             </div>

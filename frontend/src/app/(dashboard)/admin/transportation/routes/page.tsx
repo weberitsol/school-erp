@@ -1,25 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, MapPin } from 'lucide-react';
+import { routesService, type Route, type BoardingPoint } from '@/services/transportation/routes.service';
 
-interface BoardingPoint {
-  id: string;
-  name: string;
-  sequence: number;
-  arrivalTime: string; // Format: 'HH:mm', e.g., '07:45'
-}
-
-interface Route {
-  id: string;
+interface RouteFormData {
   name: string;
   startPoint: string;
   endPoint: string;
-  distance: number;
-  departureTime: string; // Format: 'HH:mm', e.g., '07:30'
-  arrivalTime: string; // Format: 'HH:mm', e.g., '08:45'
-  operatingDays: string[]; // e.g., ['MON', 'TUE', 'WED', 'THU', 'FRI']
-  boardingPoints: BoardingPoint[];
+  distance: string;
+  departureTime: string;
+  arrivalTime: string;
   status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -35,21 +26,71 @@ const DAYS_OF_WEEK = [
 
 export default function TransportationRoutesPage() {
   const [routes, setRoutes] = useState<Route[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingRoute, setEditingRoute] = useState<Route | null>(null);
   const [boardingPointInput, setBoardingPointInput] = useState('');
   const [boardingPointTimeInput, setBoardingPointTimeInput] = useState('');
   const [boardingPoints, setBoardingPoints] = useState<BoardingPoint[]>([]);
   const [operatingDays, setOperatingDays] = useState<string[]>([]);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RouteFormData>({
     name: '',
     startPoint: '',
     endPoint: '',
     distance: '',
     departureTime: '',
     arrivalTime: '',
-    status: 'ACTIVE' as const,
+    status: 'ACTIVE',
   });
+
+  // Fetch routes on component mount
+  useEffect(() => {
+    fetchRoutes();
+  }, []);
+
+  const normalizeRoute = (route: Route) => {
+    // Ensure all required fields have defaults
+    return {
+      ...route,
+      startPoint: route.startPoint ?? '',
+      endPoint: route.endPoint ?? '',
+      distance: route.distance ?? 0,
+      departureTime: route.departureTime ?? '',
+      arrivalTime: route.arrivalTime ?? '',
+      operatingDays: route.operatingDays ?? [],
+      boardingPoints: route.boardingPoints ?? [],
+      stops: route.stops ?? [],
+    } as Required<Route>;
+  };
+
+  const fetchRoutes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await routesService.getAll();
+      console.log('Raw routes from API:', data);
+      console.log('Routes type:', typeof data, 'Is array:', Array.isArray(data));
+
+      if (!Array.isArray(data)) {
+        console.error('Routes data is not an array:', data);
+        setRoutes([]);
+        return;
+      }
+
+      // Normalize all routes to ensure required fields exist
+      const normalizedRoutes = data.map(normalizeRoute);
+      console.log('Normalized routes:', normalizedRoutes);
+      setRoutes(normalizedRoutes);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to fetch routes';
+      setError(errorMsg);
+      console.error('Error fetching routes:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -111,7 +152,7 @@ export default function TransportationRoutesPage() {
     return { valid: true };
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const timeValidation = validateTimes();
@@ -120,29 +161,11 @@ export default function TransportationRoutesPage() {
       return;
     }
 
-    if (editingRoute) {
-      // Update existing route
-      const updatedRoutes = routes.map((route) =>
-        route.id === editingRoute.id
-          ? {
-              ...route,
-              name: formData.name,
-              startPoint: formData.startPoint,
-              endPoint: formData.endPoint,
-              distance: parseFloat(formData.distance),
-              departureTime: formData.departureTime,
-              arrivalTime: formData.arrivalTime,
-              operatingDays: operatingDays,
-              boardingPoints: boardingPoints,
-              status: formData.status,
-            }
-          : route
-      );
-      setRoutes(updatedRoutes);
-    } else {
-      // Create new route
-      const newRoute: Route = {
-        id: Math.random().toString(36).substr(2, 9),
+    try {
+      setSubmitting(true);
+      setError(null);
+
+      const routeData = {
         name: formData.name,
         startPoint: formData.startPoint,
         endPoint: formData.endPoint,
@@ -150,39 +173,86 @@ export default function TransportationRoutesPage() {
         departureTime: formData.departureTime,
         arrivalTime: formData.arrivalTime,
         operatingDays: operatingDays,
-        boardingPoints: boardingPoints,
-        status: formData.status,
+        status: formData.status as 'ACTIVE' | 'INACTIVE',
+        boardingPoints: [],
       };
-      setRoutes([...routes, newRoute]);
+
+      if (editingRoute) {
+        // Update existing route
+        await routesService.update(editingRoute.id, routeData);
+      } else {
+        // Create new route
+        await routesService.create(routeData);
+      }
+
+      // Refresh the routes list
+      await fetchRoutes();
+      resetForm();
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to save route';
+      setError(errorMsg);
+      console.error('Error saving route:', err);
+      alert(errorMsg);
+    } finally {
+      setSubmitting(false);
     }
-    resetForm();
   };
 
   const handleEdit = (route: Route) => {
-    setEditingRoute(route);
+    const normalizedRoute = normalizeRoute(route);
+    setEditingRoute(normalizedRoute);
     setFormData({
       name: route.name,
-      startPoint: route.startPoint,
-      endPoint: route.endPoint,
-      distance: route.distance.toString(),
-      departureTime: route.departureTime,
-      arrivalTime: route.arrivalTime,
+      startPoint: route.startPoint ?? '',
+      endPoint: route.endPoint ?? '',
+      distance: (route.distance ?? 0).toString(),
+      departureTime: route.departureTime ?? '',
+      arrivalTime: route.arrivalTime ?? '',
       status: route.status,
     });
-    setBoardingPoints(route.boardingPoints);
-    setOperatingDays(route.operatingDays || []);
+    setBoardingPoints(route.boardingPoints ?? []);
+    setOperatingDays(route.operatingDays ?? []);
     setShowForm(true);
   };
 
-  const handleDelete = (routeId: string) => {
+  const handleDelete = async (routeId: string) => {
     if (confirm('Are you sure you want to delete this route?')) {
-      setRoutes(routes.filter((route) => route.id !== routeId));
+      try {
+        setSubmitting(true);
+        setError(null);
+        await routesService.delete(routeId);
+        // Refresh the routes list
+        await fetchRoutes();
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Failed to delete route';
+        setError(errorMsg);
+        console.error('Error deleting route:', err);
+        alert(errorMsg);
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading routes...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+            <p className="font-medium">Error: {error}</p>
+          </div>
+        )}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Transportation Routes</h1>
           <button
@@ -191,7 +261,8 @@ export default function TransportationRoutesPage() {
               setShowForm(!showForm);
               if (showForm) resetForm();
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            disabled={submitting}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
             <Plus className="w-5 h-5" />
             Add Route
@@ -386,14 +457,16 @@ export default function TransportationRoutesPage() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  disabled={submitting}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {editingRoute ? 'Update Route' : 'Save Route'}
+                  {submitting ? 'Saving...' : editingRoute ? 'Update Route' : 'Save Route'}
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-4 py-2 bg-gray-300 text-gray-900 rounded-lg hover:bg-gray-400"
+                  disabled={submitting}
+                  className="px-4 py-2 bg-gray-300 text-gray-900 rounded-lg hover:bg-gray-400 disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -427,85 +500,107 @@ export default function TransportationRoutesPage() {
                   </td>
                 </tr>
               ) : (
-                routes.map((route) => (
-                  <tr key={route.id} className="border-t border-gray-200 hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-900">{route.name}</td>
-                    <td className="px-6 py-4 text-gray-600">{route.startPoint}</td>
-                    <td className="px-6 py-4 text-gray-600">{route.endPoint}</td>
-                    <td className="px-6 py-4 text-gray-600">{route.distance}</td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        {route.operatingDays && route.operatingDays.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {route.operatingDays.map((day) => (
-                              <span key={day} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                                {day.substring(0, 1)}
-                              </span>
-                            ))}
+                routes.map((route) => {
+                  // Ensure normalization for each row
+                  const normalized = normalizeRoute(route);
+                  return (
+                    <tr key={route.id} className="border-t border-gray-200 hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium text-gray-900">{normalized.name}</td>
+                      <td className="px-6 py-4 text-gray-600">{normalized.startPoint || '-'}</td>
+                      <td className="px-6 py-4 text-gray-600">{normalized.endPoint || '-'}</td>
+                      <td className="px-6 py-4 text-gray-600">{normalized.distance || '-'}</td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm">
+                          {normalized.operatingDays?.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {normalized.operatingDays.map((day) => (
+                                <span key={day} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                                  {day.substring(0, 1)}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500">-</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {normalized.departureTime && normalized.arrivalTime ? (
+                          <span className="font-medium">{normalized.departureTime} → {normalized.arrivalTime}</span>
+                        ) : normalized.startTime && normalized.endTime ? (
+                          <span className="font-medium">{normalized.startTime} → {normalized.endTime}</span>
+                        ) : (
+                          <span className="text-gray-500">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {normalized.boardingPoints?.length > 0 ? (
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900 mb-1">{normalized.boardingPoints.length} points</div>
+                            <div className="text-xs text-gray-600 max-h-20 overflow-y-auto">
+                              {normalized.boardingPoints.map((point) => (
+                                <div key={point.id} className="flex items-center gap-1">
+                                  <span className="inline-block bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-xs font-medium">
+                                    {point.sequence}
+                                  </span>
+                                  {point.name}
+                                  <span className="text-gray-500 text-xs bg-gray-200 px-1.5 py-0.5 rounded">
+                                    {point.arrivalTime}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : normalized.stops?.length > 0 ? (
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900 mb-1">{normalized.stops.length} stops</div>
+                            <div className="text-xs text-gray-600 max-h-20 overflow-y-auto">
+                              {normalized.stops.map((point) => (
+                                <div key={point.id} className="flex items-center gap-1">
+                                  <span className="inline-block bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-xs font-medium">
+                                    {point.sequence}
+                                  </span>
+                                  {point.name}
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         ) : (
-                          <span className="text-gray-500">No schedule</span>
+                          <span className="text-gray-500 text-sm">-</span>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {route.departureTime && route.arrivalTime ? (
-                        <span className="font-medium">{route.departureTime} → {route.arrivalTime}</span>
-                      ) : (
-                        <span className="text-gray-500">No times</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {route.boardingPoints.length > 0 ? (
-                        <div className="text-sm">
-                          <div className="font-medium text-gray-900 mb-1">{route.boardingPoints.length} points</div>
-                          <div className="text-xs text-gray-600 max-h-20 overflow-y-auto">
-                            {route.boardingPoints.map((point) => (
-                              <div key={point.id} className="flex items-center gap-1">
-                                <span className="inline-block bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-xs font-medium">
-                                  {point.sequence}
-                                </span>
-                                {point.name}
-                                <span className="text-gray-500 text-xs bg-gray-200 px-1.5 py-0.5 rounded">
-                                  {point.arrivalTime}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-gray-500 text-sm">No boarding points</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          route.status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {route.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 flex gap-2">
-                      <button
-                        onClick={() => handleEdit(route)}
-                        className="p-2 hover:bg-gray-200 rounded transition-colors"
-                        title="Edit route"
-                      >
-                        <Edit className="w-4 h-4 text-blue-600" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(route.id)}
-                        className="p-2 hover:bg-gray-200 rounded transition-colors"
-                        title="Delete route"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            normalized.status === 'ACTIVE'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {normalized.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 flex gap-2">
+                        <button
+                          onClick={() => handleEdit(normalized)}
+                          disabled={submitting}
+                          className="p-2 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Edit route"
+                        >
+                          <Edit className="w-4 h-4 text-blue-600" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(route.id)}
+                          disabled={submitting}
+                          className="p-2 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete route"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

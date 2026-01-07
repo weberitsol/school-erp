@@ -45,10 +45,10 @@ export default function StopsPage() {
     location: '',
     latitude: '',
     longitude: '',
-    stopType: 'PICKUP' as const,
+    stopType: 'PICKUP' as 'PICKUP' | 'DROPOFF' | 'BOTH',
     geofenceRadius: 100,
     expectedArrivalTime: '',
-    status: 'ACTIVE' as const,
+    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
   });
   const [assignedRoutes, setAssignedRoutes] = useState<string[]>([]);
 

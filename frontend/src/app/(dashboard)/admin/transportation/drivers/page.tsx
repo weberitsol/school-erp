@@ -1,66 +1,73 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Users } from 'lucide-react';
+import { driversService, type Driver } from '@/services/transportation/drivers.service';
+import { vehiclesService, type Vehicle } from '@/services/transportation/vehicles.service';
+import { routesService, type Route } from '@/services/transportation/routes.service';
 
-interface Driver {
-  id: string;
+interface DriverFormData {
   fullName: string;
   email: string;
   phone: string;
   licenseNumber: string;
-  licenseExpiry: string; // Format: 'YYYY-MM-DD'
-  licenseClass: string; // e.g., 'A', 'B', 'C', 'D'
+  licenseExpiry: string;
+  licenseClass: string;
   address: string;
   emergencyContact: string;
   emergencyPhone: string;
-  assignedVehicles: string[]; // Vehicle IDs
-  assignedRoutes: string[]; // Route IDs
   status: 'ACTIVE' | 'INACTIVE';
 }
 
-interface Vehicle {
-  id: string;
-  registrationNo: string;
-}
-
-interface Route {
-  id: string;
-  name: string;
-}
-
-// Sample data
-const SAMPLE_VEHICLES: Vehicle[] = [
-  { id: 'v1', registrationNo: 'MH-01-AB-1234' },
-  { id: 'v2', registrationNo: 'MH-01-CD-5678' },
-  { id: 'v3', registrationNo: 'MH-01-EF-9012' },
-];
-
-const SAMPLE_ROUTES: Route[] = [
-  { id: 'r1', name: 'Morning Route A' },
-  { id: 'r2', name: 'Morning Route B' },
-  { id: 'r3', name: 'Evening Route A' },
-  { id: 'r4', name: 'Evening Route B' },
-];
-
 export default function DriversPage() {
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<DriverFormData>({
     fullName: '',
     email: '',
     phone: '',
     licenseNumber: '',
     licenseExpiry: '',
-    licenseClass: 'B',
+    licenseClass: 'D',
     address: '',
     emergencyContact: '',
     emergencyPhone: '',
-    status: 'ACTIVE' as const,
+    status: 'ACTIVE',
   });
   const [assignedVehicles, setAssignedVehicles] = useState<string[]>([]);
   const [assignedRoutes, setAssignedRoutes] = useState<string[]>([]);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  const fetchAllData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [driversData, vehiclesData, routesData] = await Promise.all([
+        driversService.getAll(),
+        vehiclesService.getAll(),
+        routesService.getAll(),
+      ]);
+      setDrivers(driversData);
+      setVehicles(vehiclesData);
+      setRoutes(routesData);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to fetch data';
+      setError(errorMsg);
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -69,7 +76,7 @@ export default function DriversPage() {
       phone: '',
       licenseNumber: '',
       licenseExpiry: '',
-      licenseClass: 'B',
+      licenseClass: 'D',
       address: '',
       emergencyContact: '',
       emergencyPhone: '',
@@ -94,7 +101,7 @@ export default function DriversPage() {
     return expiry < today;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
@@ -119,47 +126,11 @@ export default function DriversPage() {
       return;
     }
 
-    // Check license expiry is in future
-    if (new Date(formData.licenseExpiry) < new Date()) {
-      alert('License expiry date must be in the future');
-      return;
-    }
+    try {
+      setSubmitting(true);
+      setError(null);
 
-    // Check if license number is unique (for new drivers)
-    if (
-      !editingDriver &&
-      drivers.some((d) => d.licenseNumber === formData.licenseNumber)
-    ) {
-      alert('License number already exists');
-      return;
-    }
-
-    if (editingDriver) {
-      // Update existing driver
-      const updatedDrivers = drivers.map((driver) =>
-        driver.id === editingDriver.id
-          ? {
-              ...driver,
-              fullName: formData.fullName,
-              email: formData.email,
-              phone: formData.phone,
-              licenseNumber: formData.licenseNumber,
-              licenseExpiry: formData.licenseExpiry,
-              licenseClass: formData.licenseClass,
-              address: formData.address,
-              emergencyContact: formData.emergencyContact,
-              emergencyPhone: formData.emergencyPhone,
-              assignedVehicles: assignedVehicles,
-              assignedRoutes: assignedRoutes,
-              status: formData.status,
-            }
-          : driver
-      );
-      setDrivers(updatedDrivers);
-    } else {
-      // Create new driver
-      const newDriver: Driver = {
-        id: Math.random().toString(36).substr(2, 9),
+      const driverData = {
         fullName: formData.fullName,
         email: formData.email,
         phone: formData.phone,
@@ -169,13 +140,28 @@ export default function DriversPage() {
         address: formData.address,
         emergencyContact: formData.emergencyContact,
         emergencyPhone: formData.emergencyPhone,
-        assignedVehicles: assignedVehicles,
-        assignedRoutes: assignedRoutes,
-        status: formData.status,
+        status: formData.status as 'ACTIVE' | 'INACTIVE',
       };
-      setDrivers([...drivers, newDriver]);
+
+      if (editingDriver) {
+        // Update existing driver
+        await driversService.update(editingDriver.id, driverData);
+      } else {
+        // Create new driver
+        await driversService.create(driverData);
+      }
+
+      // Refresh the drivers list
+      await fetchAllData();
+      resetForm();
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to save driver';
+      setError(errorMsg);
+      console.error('Error saving driver:', err);
+      alert(errorMsg);
+    } finally {
+      setSubmitting(false);
     }
-    resetForm();
   };
 
   const handleEdit = (driver: Driver) => {
@@ -192,28 +178,49 @@ export default function DriversPage() {
       emergencyPhone: driver.emergencyPhone,
       status: driver.status,
     });
-    setAssignedVehicles(driver.assignedVehicles);
-    setAssignedRoutes(driver.assignedRoutes);
+    setAssignedVehicles([]);
+    setAssignedRoutes([]);
     setShowForm(true);
   };
 
-  const handleDelete = (driverId: string) => {
+  const handleDelete = async (driverId: string) => {
     if (confirm('Are you sure you want to delete this driver?')) {
-      setDrivers(drivers.filter((driver) => driver.id !== driverId));
+      try {
+        setSubmitting(true);
+        setError(null);
+        await driversService.delete(driverId);
+        // Refresh the drivers list
+        await fetchAllData();
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Failed to delete driver';
+        setError(errorMsg);
+        console.error('Error deleting driver:', err);
+        alert(errorMsg);
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
-  const getVehicleName = (vehicleId: string) => {
-    return SAMPLE_VEHICLES.find((v) => v.id === vehicleId)?.registrationNo || vehicleId;
-  };
-
-  const getRouteName = (routeId: string) => {
-    return SAMPLE_ROUTES.find((r) => r.id === routeId)?.name || routeId;
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading drivers...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+            <p className="font-medium">Error: {error}</p>
+          </div>
+        )}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Drivers Management</h1>
           <button
@@ -222,7 +229,8 @@ export default function DriversPage() {
               setShowForm(!showForm);
               if (showForm) resetForm();
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            disabled={submitting}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
             <Plus className="w-5 h-5" />
             Add Driver
@@ -348,48 +356,56 @@ export default function DriversPage() {
               {/* Vehicle Assignment */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Vehicles</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {SAMPLE_VEHICLES.map((vehicle) => (
-                    <label key={vehicle.id} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={assignedVehicles.includes(vehicle.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setAssignedVehicles([...assignedVehicles, vehicle.id]);
-                          } else {
-                            setAssignedVehicles(assignedVehicles.filter((id) => id !== vehicle.id));
-                          }
-                        }}
-                        className="rounded"
-                      />
-                      <span className="text-sm text-gray-700">{vehicle.registrationNo}</span>
-                    </label>
-                  ))}
+                <div className="grid grid-cols-3 gap-2 border border-gray-300 rounded-lg p-3 bg-gray-50">
+                  {vehicles.length > 0 ? (
+                    vehicles.map((vehicle) => (
+                      <label key={vehicle.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={assignedVehicles.includes(vehicle.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setAssignedVehicles([...assignedVehicles, vehicle.id]);
+                            } else {
+                              setAssignedVehicles(assignedVehicles.filter((id) => id !== vehicle.id));
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span className="text-sm text-gray-700">{vehicle.registrationNo}</span>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm col-span-3">No vehicles available</p>
+                  )}
                 </div>
               </div>
 
               {/* Route Assignment */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Assigned Routes</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {SAMPLE_ROUTES.map((route) => (
-                    <label key={route.id} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={assignedRoutes.includes(route.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setAssignedRoutes([...assignedRoutes, route.id]);
-                          } else {
-                            setAssignedRoutes(assignedRoutes.filter((id) => id !== route.id));
-                          }
-                        }}
-                        className="rounded"
-                      />
-                      <span className="text-sm text-gray-700">{route.name}</span>
-                    </label>
-                  ))}
+                <div className="grid grid-cols-2 gap-2 border border-gray-300 rounded-lg p-3 bg-gray-50">
+                  {routes.length > 0 ? (
+                    routes.map((route) => (
+                      <label key={route.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={assignedRoutes.includes(route.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setAssignedRoutes([...assignedRoutes, route.id]);
+                            } else {
+                              setAssignedRoutes(assignedRoutes.filter((id) => id !== route.id));
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span className="text-sm text-gray-700">{route.name}</span>
+                      </label>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm col-span-2">No routes available</p>
+                  )}
                 </div>
               </div>
 
@@ -410,14 +426,16 @@ export default function DriversPage() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  disabled={submitting}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {editingDriver ? 'Update Driver' : 'Save Driver'}
+                  {submitting ? 'Saving...' : editingDriver ? 'Update Driver' : 'Save Driver'}
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-4 py-2 bg-gray-300 text-gray-900 rounded-lg hover:bg-gray-400"
+                  disabled={submitting}
+                  className="px-4 py-2 bg-gray-300 text-gray-900 rounded-lg hover:bg-gray-400 disabled:opacity-50"
                 >
                   Cancel
                 </button>
@@ -475,32 +493,8 @@ export default function DriversPage() {
                         <div className="text-gray-500">{driver.email}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      {driver.assignedVehicles.length > 0 ? (
-                        <div className="text-sm">
-                          {driver.assignedVehicles.map((vehicleId) => (
-                            <span key={vehicleId} className="inline-block bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-medium mr-1 mb-1">
-                              {getVehicleName(vehicleId)}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-gray-500 text-sm">None</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {driver.assignedRoutes.length > 0 ? (
-                        <div className="text-sm">
-                          {driver.assignedRoutes.map((routeId) => (
-                            <span key={routeId} className="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-medium mr-1 mb-1">
-                              {getRouteName(routeId)}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-gray-500 text-sm">None</span>
-                      )}
-                    </td>
+                    <td className="px-6 py-4 text-gray-600">-</td>
+                    <td className="px-6 py-4 text-gray-600">-</td>
                     <td className="px-6 py-4">
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -515,14 +509,16 @@ export default function DriversPage() {
                     <td className="px-6 py-4 flex gap-2">
                       <button
                         onClick={() => handleEdit(driver)}
-                        className="p-2 hover:bg-gray-200 rounded transition-colors"
+                        disabled={submitting}
+                        className="p-2 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Edit driver"
                       >
                         <Edit className="w-4 h-4 text-blue-600" />
                       </button>
                       <button
                         onClick={() => handleDelete(driver.id)}
-                        className="p-2 hover:bg-gray-200 rounded transition-colors"
+                        disabled={submitting}
+                        className="p-2 hover:bg-gray-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete driver"
                       >
                         <Trash2 className="w-4 h-4 text-red-600" />

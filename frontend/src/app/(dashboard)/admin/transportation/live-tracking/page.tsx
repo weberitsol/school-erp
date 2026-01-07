@@ -145,7 +145,7 @@ export default function LiveTrackingPage() {
     }
   };
 
-  const routes = [...new Set(vehicles.map((v) => v.routeId))];
+  const routes = Array.from(new Set(vehicles.map((v) => v.routeId)));
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">

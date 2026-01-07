@@ -73,7 +73,7 @@ export default function BusTracking() {
   const [student, setStudent] = useState<StudentInfo>(STUDENT_INFO);
   const [showCallDriver, setShowCallDriver] = useState(false);
 
-  const etaMinutes = parseInt(trip.eta.split(':')[1]) - parseInt(new Date().getMinutes());
+  const etaMinutes = parseInt(trip.eta.split(':')[1]) - new Date().getMinutes();
   const safetyScore = 94;
   const onTimePercentage = 92;
 
