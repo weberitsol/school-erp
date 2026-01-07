@@ -157,9 +157,11 @@ const navItems: NavItem[] = [
       { label: 'Drivers', href: '/admin/transportation/drivers' },
       { label: 'Trips', href: '/admin/transportation/trips' },
       { label: 'Stops', href: '/admin/transportation/stops' },
+      { label: 'Live Tracking', href: '/admin/transportation/live-tracking' },
+      { label: 'Trip Progress', href: '/admin/transportation/trip-progress' },
       { label: 'Boarding', href: '/admin/transportation/boarding' },
       { label: 'Attendance', href: '/admin/transportation/attendance-integration' },
-      { label: 'Trip Progress', href: '/admin/transportation/trip-progress' },
+      { label: 'Analytics', href: '/admin/transportation/analytics' },
     ],
   },
   {
