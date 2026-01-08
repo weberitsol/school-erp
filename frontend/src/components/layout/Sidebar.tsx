@@ -26,7 +26,6 @@ import {
   FileQuestion,
   ClipboardList,
   BarChart3,
-  MessageSquare,
   Building2,
   UserCog,
   Settings2,
@@ -189,19 +188,27 @@ const navItems: NavItem[] = [
     icon: Calendar,
   },
   {
-    label: 'Communication',
-    icon: MessageSquare,
-    children: [
-      { label: 'Announcements', href: '/communication/announcements' },
-      { label: 'Messages', href: '/communication/messages' },
-    ],
-  },
-  {
     label: 'Reports',
     icon: BarChart3,
     children: [
       { label: 'Overview', href: '/reports' },
       { label: 'Video Analytics', href: '/reports/videos' },
+    ],
+  },
+  {
+    label: 'HR Management',
+    icon: UserCog,
+    roles: ['ADMIN'],
+    children: [
+      { label: 'Employees', href: '/admin/hr/employees' },
+      { label: 'Designations', href: '/admin/hr/designations' },
+      { label: 'Salaries', href: '/admin/hr/salaries' },
+      { label: 'Payslips', href: '/admin/hr/payslips' },
+      { label: 'Promotions', href: '/admin/hr/promotions' },
+      { label: 'Transfers', href: '/admin/hr/transfers' },
+      { label: 'Separations', href: '/admin/hr/separations' },
+      { label: 'Leave Management', href: '/admin/hr/leave-management' },
+      { label: 'Performance Reviews', href: '/admin/hr/performance-reviews' },
     ],
   },
   {
@@ -249,7 +256,7 @@ const navItems: NavItem[] = [
     icon: Settings2,
     roles: ['ADMIN', 'SUPER_ADMIN'],
     children: [
-      { label: 'Classes & Subjects', href: '/admin/classes-subjects' },
+      { label: 'Classes & Subjects', href: '/admin/classes' },
       { label: 'Branches', href: '/admin/branches' },
       { label: 'Batches', href: '/admin/batches' },
       { label: 'Exam Patterns', href: '/admin/patterns' },
