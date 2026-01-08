@@ -102,6 +102,7 @@ const navItems: NavItem[] = [
       { label: 'Exams', href: '/academics/exams' },
       { label: 'Results', href: '/academics/results' },
       { label: 'Report Cards', href: '/academics/report-cards' },
+      { label: 'Chapters', href: '/academics/chapters' },
     ],
   },
   {
@@ -201,6 +202,46 @@ const navItems: NavItem[] = [
     children: [
       { label: 'Overview', href: '/reports' },
       { label: 'Video Analytics', href: '/reports/videos' },
+    ],
+  },
+  {
+    label: 'Parents',
+    icon: Users,
+    roles: ['ADMIN'],
+    children: [
+      { label: 'All Parents', href: '/admin/parents' },
+    ],
+  },
+  {
+    label: 'Boarding/Hostel',
+    icon: Building2,
+    roles: ['ADMIN'],
+    children: [
+      { label: 'Room Management', href: '/admin/boarding' },
+    ],
+  },
+  {
+    label: 'Examinations',
+    icon: FileQuestion,
+    roles: ['ADMIN', 'TEACHER'],
+    children: [
+      { label: 'Exams & Results', href: '/admin/exams' },
+    ],
+  },
+  {
+    label: 'Announcements',
+    icon: Bell,
+    roles: ['ADMIN'],
+    children: [
+      { label: 'Manage Announcements', href: '/admin/announcements' },
+    ],
+  },
+  {
+    label: 'Analytics',
+    icon: BarChart3,
+    roles: ['ADMIN'],
+    children: [
+      { label: 'Student Analytics', href: '/admin/analytics' },
     ],
   },
   {

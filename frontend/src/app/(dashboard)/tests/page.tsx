@@ -29,11 +29,14 @@ import {
   MoreVertical,
   X,
   Upload,
+  FileText,
+  Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
 import { testsApi, Test, TestStatus } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { GenerateQuestionPaperDialog } from '@/components/modals';
 
 const subjects = ['All Subjects', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English'];
 const statuses: ('All Status' | TestStatus)[] = ['All Status', 'DRAFT', 'PUBLISHED', 'ACTIVE', 'CLOSED', 'ARCHIVED'];
@@ -57,7 +60,9 @@ export default function TestsPage() {
   // Modal states
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [selectedTest, setSelectedTest] = useState<Test | null>(null);
+  const [selectedTestForGeneration, setSelectedTestForGeneration] = useState<Test | null>(null);
   const [newTestName, setNewTestName] = useState('');
   const [assignClassId, setAssignClassId] = useState('');
   const [assignSectionId, setAssignSectionId] = useState('');
@@ -269,6 +274,12 @@ export default function TestsPage() {
 
   const handlePreview = (testId: string) => {
     window.open(`/tests/${testId}/preview`, '_blank');
+    setActionMenuOpen(null);
+  };
+
+  const handleGenerateQuestionPaper = (test: Test) => {
+    setSelectedTestForGeneration(test);
+    setShowGenerateDialog(true);
     setActionMenuOpen(null);
   };
 
@@ -574,6 +585,14 @@ export default function TestsPage() {
                         >
                           <BarChart3 className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover/btn:text-purple-500" />
                         </Link>
+                        {/* Generate Question Paper Button */}
+                        <button
+                          onClick={() => handleGenerateQuestionPaper(test)}
+                          className="p-2.5 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all duration-200 group/btn"
+                          title="Generate Question Paper"
+                        >
+                          <Download className="h-4 w-4 text-gray-500 dark:text-gray-400 group-hover/btn:text-green-500" />
+                        </button>
                         {/* Delete Button - Admin Only */}
                         {isAdmin && (
                           <button
@@ -784,6 +803,22 @@ export default function TestsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Generate Question Paper Dialog */}
+      {showGenerateDialog && selectedTestForGeneration && (
+        <GenerateQuestionPaperDialog
+          testId={selectedTestForGeneration.id}
+          testName={selectedTestForGeneration.title}
+          onClose={() => setShowGenerateDialog(false)}
+          onSuccess={() => {
+            toast({
+              title: 'Success',
+              description: 'Question paper generated successfully!',
+            });
+            setShowGenerateDialog(false);
+          }}
+        />
       )}
     </div>
   );

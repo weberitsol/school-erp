@@ -36,6 +36,7 @@ import {
   PwDType,
 } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { GenerateReportCardDialog, GenerateCertificateDialog } from '@/components/modals';
 
 type PageMode = 'list' | 'add' | 'edit' | 'view' | 'import';
 
@@ -78,6 +79,11 @@ export default function StudentsPage() {
 
   // Import state
   const [importFile, setImportFile] = useState<File | null>(null);
+
+  // Generate document states
+  const [showReportCardDialog, setShowReportCardDialog] = useState(false);
+  const [showCertificateDialog, setShowCertificateDialog] = useState(false);
+  const [selectedStudentForGeneration, setSelectedStudentForGeneration] = useState<Student | null>(null);
   const [previewData, setPreviewData] = useState<ImportPreviewResult | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<{
@@ -443,6 +449,18 @@ export default function StudentsPage() {
     }
   };
 
+  // Generate Report Card
+  const handleGenerateReportCard = (student: Student) => {
+    setSelectedStudentForGeneration(student);
+    setShowReportCardDialog(true);
+  };
+
+  // Generate Certificate
+  const handleGenerateCertificate = (student: Student) => {
+    setSelectedStudentForGeneration(student);
+    setShowCertificateDialog(true);
+  };
+
   // Reset import state
   const resetImport = () => {
     setImportFile(null);
@@ -666,6 +684,20 @@ export default function StudentsPage() {
                             title="Edit"
                           >
                             <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleGenerateReportCard(student)}
+                            className="p-2 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg text-gray-500 hover:text-amber-600"
+                            title="Generate Report Card"
+                          >
+                            <FileSpreadsheet className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleGenerateCertificate(student)}
+                            className="p-2 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg text-gray-500 hover:text-green-600"
+                            title="Generate Certificate"
+                          >
+                            <GraduationCap className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(student.id)}
@@ -2109,6 +2141,38 @@ export default function StudentsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Generate Report Card Dialog */}
+      {showReportCardDialog && selectedStudentForGeneration && (
+        <GenerateReportCardDialog
+          studentId={selectedStudentForGeneration.id}
+          studentName={`${selectedStudentForGeneration.firstName} ${selectedStudentForGeneration.lastName}`}
+          onClose={() => setShowReportCardDialog(false)}
+          onSuccess={() => {
+            toast({
+              title: 'Success',
+              description: 'Report card generated successfully!',
+            });
+            setShowReportCardDialog(false);
+          }}
+        />
+      )}
+
+      {/* Generate Certificate Dialog */}
+      {showCertificateDialog && selectedStudentForGeneration && (
+        <GenerateCertificateDialog
+          studentId={selectedStudentForGeneration.id}
+          studentName={`${selectedStudentForGeneration.firstName} ${selectedStudentForGeneration.lastName}`}
+          onClose={() => setShowCertificateDialog(false)}
+          onSuccess={() => {
+            toast({
+              title: 'Success',
+              description: 'Certificate generated successfully!',
+            });
+            setShowCertificateDialog(false);
+          }}
+        />
       )}
     </div>
   );
