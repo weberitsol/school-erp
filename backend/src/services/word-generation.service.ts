@@ -94,7 +94,7 @@ class WordGenerationService {
       const test = await prisma.onlineTest.findUnique({
         where: { id: testId },
         include: {
-          testQuestions: {
+          questions: {
             include: {
               question: {
                 include: {
@@ -103,7 +103,7 @@ class WordGenerationService {
                 },
               },
             },
-            orderBy: { order: 'asc' },
+            orderBy: { sequenceOrder: 'asc' },
           },
           subject: true,
           class: true,
@@ -114,7 +114,7 @@ class WordGenerationService {
         throw new Error('Test not found');
       }
 
-      console.log(`✅ Fetched test: ${test.title} with ${test.testQuestions.length} questions`);
+      console.log(`✅ Fetched test: ${test.title} with ${test.questions.length} questions`);
 
       // Build document sections
       const sections = [
@@ -210,7 +210,7 @@ class WordGenerationService {
           : []),
 
         // Questions
-        ...this.generateQuestionParagraphs(test.testQuestions, includeAnswers),
+        ...this.generateQuestionParagraphs(test.questions, includeAnswers),
       ];
 
       // Create document with column configuration
@@ -269,8 +269,11 @@ class WordGenerationService {
           examResults: {
             where: { examId: termId },
             include: {
-              exam: true,
-              subject: true,
+              exam: {
+                include: {
+                  subject: true,
+                },
+              },
             },
           },
         },
@@ -285,8 +288,8 @@ class WordGenerationService {
       );
 
       // Calculate statistics
-      const totalMarksObtained = student.examResults.reduce((sum, r) => sum + (r.marksObtained || 0), 0);
-      const totalMarksOutOf = student.examResults.reduce((sum, r) => sum + (r.totalMarks || 0), 0);
+      const totalMarksObtained = student.examResults.reduce((sum, r) => sum + parseFloat(r.marksObtained || '0'), 0);
+      const totalMarksOutOf = student.examResults.reduce((sum, r) => sum + parseFloat(r.exam.maxMarks || '0'), 0);
       const percentage = totalMarksOutOf > 0 ? ((totalMarksObtained / totalMarksOutOf) * 100).toFixed(2) : 0;
 
       // Build document
@@ -409,13 +412,13 @@ class WordGenerationService {
                       new TableRow({
                         children: [
                           new TableCell({
-                            children: [new Paragraph(result.subject.name)],
+                            children: [new Paragraph(result.exam.subject.name)],
                             width: { size: 40, type: WidthType.PERCENTAGE },
                           }),
                           new TableCell({
                             children: [
                               new Paragraph(
-                                `${result.marksObtained || 0}/${result.totalMarks || 0}`
+                                `${result.marksObtained || 0}/${result.exam.maxMarks || 0}`
                               ),
                             ],
                             width: { size: 30, type: WidthType.PERCENTAGE },
@@ -655,7 +658,6 @@ class WordGenerationService {
         where: { id: chapterId },
         include: {
           subject: true,
-          class: true,
           ...(includeQuestions
             ? {
                 questions: {
@@ -694,8 +696,8 @@ class WordGenerationService {
           children: [
             new TextRun({ text: 'Subject: ', bold: true }),
             new TextRun(chapter.subject.name),
-            new TextRun({ text: '    |    Class: ', bold: true }),
-            new TextRun(chapter.class.name),
+            new TextRun({ text: '    |    Class Level: ', bold: true }),
+            new TextRun(chapter.classLevel || 'N/A'),
           ],
           alignment: AlignmentType.CENTER,
           spacing: { after: 300 },

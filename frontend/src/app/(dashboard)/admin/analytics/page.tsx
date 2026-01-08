@@ -35,6 +35,22 @@ interface StudentWithAnalytics {
   recommendations?: string[];
 }
 
+interface StudentsResponse {
+  data: StudentWithAnalytics[];
+}
+
+interface AnalyticsResponse {
+  data: StudentAnalytics;
+}
+
+interface InsightsResponse {
+  data: Insight[];
+}
+
+interface RecommendationsResponse {
+  data: string[];
+}
+
 export default function AnalyticsPage() {
   const { accessToken } = useAuthStore();
   const [students, setStudents] = useState<StudentWithAnalytics[]>([]);
@@ -56,7 +72,7 @@ export default function AnalyticsPage() {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/v1/students');
+      const response = await apiClient.get<StudentsResponse>('/api/v1/students');
       const studentsList = response.data || [];
       setStudents(studentsList);
       if (studentsList.length > 0) {
@@ -73,9 +89,9 @@ export default function AnalyticsPage() {
     try {
       setLoading(true);
       const [analyticsRes, insightsRes, recommendationsRes] = await Promise.all([
-        apiClient.get(`/api/v1/advanced/student/${studentId}/analytics`),
-        apiClient.get(`/api/v1/advanced/student/${studentId}/insights`),
-        apiClient.get(`/api/v1/advanced/student/${studentId}/recommendations`),
+        apiClient.get<AnalyticsResponse>(`/api/v1/advanced/student/${studentId}/analytics`),
+        apiClient.get<InsightsResponse>(`/api/v1/advanced/student/${studentId}/insights`),
+        apiClient.get<RecommendationsResponse>(`/api/v1/advanced/student/${studentId}/recommendations`),
       ]);
 
       setSelectedStudent((prev) =>

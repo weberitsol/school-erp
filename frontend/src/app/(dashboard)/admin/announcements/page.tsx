@@ -16,6 +16,18 @@ interface Announcement {
   createdAt: string;
 }
 
+interface AnnouncementsResponse {
+  data: Announcement[];
+}
+
+interface StatsResponse {
+  data: {
+    totalAnnouncements?: number;
+    publishedCount?: number;
+    activeCount?: number;
+  };
+}
+
 export default function AnnouncementsPage() {
   const { accessToken } = useAuthStore();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -33,7 +45,7 @@ export default function AnnouncementsPage() {
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/v1/announcements');
+      const response = await apiClient.get<AnnouncementsResponse>('/api/v1/announcements');
       setAnnouncements(response.data || []);
     } catch (error) {
       console.error('Failed to fetch announcements:', error);
@@ -44,7 +56,7 @@ export default function AnnouncementsPage() {
 
   const fetchStats = async () => {
     try {
-      const response = await apiClient.get('/api/v1/announcements/stats');
+      const response = await apiClient.get<StatsResponse>('/api/v1/announcements/stats');
       setStats(response.data || {});
     } catch (error) {
       console.error('Failed to fetch stats:', error);

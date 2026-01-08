@@ -26,6 +26,16 @@ interface ExamResult {
   remarks?: string;
 }
 
+interface ExamsResponse {
+  data: Exam[];
+}
+
+interface ResultsResponse {
+  data: {
+    results: ExamResult[];
+  };
+}
+
 export default function ExamsPage() {
   const { accessToken } = useAuthStore();
   const [exams, setExams] = useState<Exam[]>([]);
@@ -49,7 +59,7 @@ export default function ExamsPage() {
   const fetchExams = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/v1/exams');
+      const response = await apiClient.get<ExamsResponse>('/api/v1/exams');
       setExams(response.data || []);
       if (response.data && response.data.length > 0) {
         setSelectedExam(response.data[0].id);
@@ -65,7 +75,7 @@ export default function ExamsPage() {
     if (!selectedExam) return;
     try {
       setLoading(true);
-      const response = await apiClient.get(`/api/v1/exams/${selectedExam}/results`);
+      const response = await apiClient.get<ResultsResponse>(`/api/v1/exams/${selectedExam}/results`);
       setResults(response.data?.results || []);
     } catch (error) {
       console.error('Failed to fetch results:', error);

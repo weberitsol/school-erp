@@ -155,19 +155,19 @@ export default function LeaveManagementPage() {
                 <div className="flex justify-between">
                   <span>Casual Leave:</span>
                   <span className="font-semibold">
-                    {balance.casualLeave - (balance.casualLeaveUsed?.toNumber?.() || 0)}/{balance.casualLeave}
+                    {balance.casualLeave - (balance.casualLeaveUsed || 0)}/{balance.casualLeave}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Earned Leave:</span>
                   <span className="font-semibold">
-                    {balance.earnedLeave - (balance.earnedLeaveUsed?.toNumber?.() || 0)}/{balance.earnedLeave}
+                    {balance.earnedLeave - (balance.earnedLeaveUsed || 0)}/{balance.earnedLeave}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Medical Leave:</span>
                   <span className="font-semibold">
-                    {balance.medicalLeave - (balance.medicalLeaveUsed?.toNumber?.() || 0)}/{balance.medicalLeave}
+                    {balance.medicalLeave - (balance.medicalLeaveUsed || 0)}/{balance.medicalLeave}
                   </span>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react'>
+import { useState, useEffect } from 'react';
 import { Plus, Check, X, TrendingUp } from 'lucide-react';
 import { employeePromotionService, type EmployeePromotion } from '@/services/hr/employee-promotion.service';
 import { employeeService } from '@/services/hr/employee.service';

@@ -23,6 +23,14 @@ interface BoardingData {
   totalFacilities: number;
 }
 
+interface RoomsResponse {
+  data: Room[];
+}
+
+interface StatsResponse {
+  data: BoardingData;
+}
+
 export default function BoardingPage() {
   const { accessToken } = useAuthStore();
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -40,7 +48,7 @@ export default function BoardingPage() {
   const fetchRooms = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/v1/boarding/rooms');
+      const response = await apiClient.get<RoomsResponse>('/api/v1/boarding/rooms');
       setRooms(response.data || []);
     } catch (error) {
       console.error('Failed to fetch rooms:', error);
@@ -51,7 +59,7 @@ export default function BoardingPage() {
 
   const fetchStats = async () => {
     try {
-      const response = await apiClient.get('/api/v1/boarding/stats');
+      const response = await apiClient.get<StatsResponse>('/api/v1/boarding/stats');
       setStats(response.data || null);
     } catch (error) {
       console.error('Failed to fetch stats:', error);

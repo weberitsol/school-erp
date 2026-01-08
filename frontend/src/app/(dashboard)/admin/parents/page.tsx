@@ -17,6 +17,19 @@ interface Parent {
   user: { isActive: boolean };
 }
 
+interface ParentsResponse {
+  data: Parent[];
+}
+
+interface StatsResponse {
+  data: {
+    totalParents?: number;
+    emailCoverage?: number;
+    fathersCount?: number;
+    mothersCount?: number;
+  };
+}
+
 export default function ParentsPage() {
   const { accessToken } = useAuthStore();
   const [parents, setParents] = useState<Parent[]>([]);
@@ -35,7 +48,7 @@ export default function ParentsPage() {
   const fetchParents = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/v1/parents');
+      const response = await apiClient.get<ParentsResponse>('/api/v1/parents');
       setParents(response.data || []);
     } catch (error) {
       console.error('Failed to fetch parents:', error);
@@ -46,7 +59,7 @@ export default function ParentsPage() {
 
   const fetchStats = async () => {
     try {
-      const response = await apiClient.get('/api/v1/parents/stats');
+      const response = await apiClient.get<StatsResponse>('/api/v1/parents/stats');
       setStats(response.data || {});
     } catch (error) {
       console.error('Failed to fetch stats:', error);

@@ -112,7 +112,8 @@ export default function ChaptersPage() {
   };
 
   // Get unique subjects from chapters
-  const subjects = ['All Subjects', ...new Set(chapters.map((ch) => ch.subject?.name).filter(Boolean) as string[])];
+  const subjectNames = chapters.map((ch) => ch.subject?.name).filter(Boolean) as string[];
+  const subjects = ['All Subjects', ...Array.from(new Set(subjectNames))];
 
   return (
     <div className="space-y-6">
@@ -258,6 +259,7 @@ export default function ChaptersPage() {
       {/* Generate Study Material Dialog */}
       {showGenerateDialog && selectedChapterForGeneration && (
         <GenerateStudyMaterialDialog
+          isOpen={true}
           chapterId={selectedChapterForGeneration.id}
           chapterName={selectedChapterForGeneration.name}
           onClose={() => setShowGenerateDialog(false)}

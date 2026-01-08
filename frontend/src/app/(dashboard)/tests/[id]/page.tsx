@@ -19,11 +19,13 @@ import {
   Shield,
   RefreshCw,
   Users,
+  Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
 import { testsApi, Test, TestAttempt } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { GenerateQuestionPaperDialog } from '@/components/modals/generate-question-paper-dialog';
 
 export default function TestDetailPage() {
   const params = useParams();
@@ -36,6 +38,7 @@ export default function TestDetailPage() {
   const [previousAttempts, setPreviousAttempts] = useState<TestAttempt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
 
   const isStudent = user?.role === 'STUDENT';
 
@@ -607,7 +610,31 @@ export default function TestDetailPage() {
             <Users className="h-4 w-4" />
             View Analytics
           </Link>
+          <button
+            onClick={() => setShowGenerateDialog(true)}
+            className="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all duration-200 shadow-lg shadow-blue-500/25 flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Generate Question Paper
+          </button>
         </div>
+      )}
+
+      {/* Generate Question Paper Dialog */}
+      {test && (
+        <GenerateQuestionPaperDialog
+          testId={test.id}
+          testName={test.title}
+          isOpen={showGenerateDialog}
+          onClose={() => setShowGenerateDialog(false)}
+          onSuccess={() => {
+            toast({
+              title: 'Success',
+              description: 'Question paper generated successfully!',
+            });
+            setShowGenerateDialog(false);
+          }}
+        />
       )}
     </div>
   );

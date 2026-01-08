@@ -2146,6 +2146,7 @@ export default function StudentsPage() {
       {/* Generate Report Card Dialog */}
       {showReportCardDialog && selectedStudentForGeneration && (
         <GenerateReportCardDialog
+          isOpen={true}
           studentId={selectedStudentForGeneration.id}
           studentName={`${selectedStudentForGeneration.firstName} ${selectedStudentForGeneration.lastName}`}
           onClose={() => setShowReportCardDialog(false)}
@@ -2162,6 +2163,7 @@ export default function StudentsPage() {
       {/* Generate Certificate Dialog */}
       {showCertificateDialog && selectedStudentForGeneration && (
         <GenerateCertificateDialog
+          isOpen={true}
           studentId={selectedStudentForGeneration.id}
           studentName={`${selectedStudentForGeneration.firstName} ${selectedStudentForGeneration.lastName}`}
           onClose={() => setShowCertificateDialog(false)}
