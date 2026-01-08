@@ -15,8 +15,8 @@ import {
   MoreVertical,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuthStore } from '@/stores/auth.store';
-import { financeApi, FeeInvoice, InvoiceStats } from '@/lib/api';
+import { FeeInvoice, InvoiceStats } from '@/lib/api';
+import { invoicesService } from '@/services/finance';
 import { useToast } from '@/hooks/use-toast';
 
 type PageMode = 'list' | 'generate' | 'details';
@@ -56,7 +56,6 @@ const initialFormData: GenerateInvoiceFormData = {
 };
 
 export default function InvoicesPage() {
-  const { accessToken } = useAuthStore();
   const { toast } = useToast();
 
   const [mode, setMode] = useState<PageMode>('list');
@@ -75,22 +74,23 @@ export default function InvoicesPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const fetchInvoiceStats = useCallback(async () => {
-    if (!accessToken) return;
     try {
-      const res = await financeApi.getInvoiceStats(accessToken);
-      if (res.success && res.data) {
-        setStats(res.data);
-      }
+      const res = await invoicesService.getStats();
+      setStats(res);
     } catch (error) {
       console.error('Error fetching invoice stats:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch invoice stats',
+        variant: 'destructive',
+      });
     }
-  }, [accessToken]);
+  }, [toast]);
 
   const fetchInvoices = useCallback(async () => {
-    if (!accessToken) return;
     setIsLoading(true);
     try {
-      const res = await financeApi.getInvoices(accessToken, {
+      const res = await invoicesService.getAll({
         search: searchTerm || undefined,
         status: statusFilter || undefined,
         dateFrom: dateFrom || undefined,
@@ -99,10 +99,8 @@ export default function InvoicesPage() {
         limit: 10,
       });
 
-      if (res.success && res.data) {
-        setInvoices(res.data.data || []);
-        setTotal(res.data.total || 0);
-      }
+      setInvoices(res.data || []);
+      setTotal(res.total || 0);
     } catch (error) {
       console.error('Error fetching invoices:', error);
       toast({
@@ -113,7 +111,7 @@ export default function InvoicesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, searchTerm, statusFilter, dateFrom, dateTo, page, toast]);
+  }, [searchTerm, statusFilter, dateFrom, dateTo, page, toast]);
 
   useEffect(() => {
     if (mode === 'list') {
@@ -140,39 +138,34 @@ export default function InvoicesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accessToken) return;
     if (!validateForm()) return;
 
     setIsLoading(true);
     try {
       if (formData.bulkGenerate) {
-        const res = await financeApi.bulkGenerateInvoices(accessToken, {
+        await invoicesService.bulkGenerate({
           classId: formData.classId,
           feeStructureIds: formData.feeStructureIds,
           dueDate: formData.dueDate,
           discount: formData.discount ? parseFloat(formData.discount) : 0,
         });
 
-        if (res.success) {
-          toast({
-            title: 'Success',
-            description: 'Invoices generated successfully',
-          });
-        }
+        toast({
+          title: 'Success',
+          description: 'Invoices generated successfully',
+        });
       } else {
-        const res = await financeApi.generateInvoice(accessToken, {
+        await invoicesService.generate({
           studentId: formData.studentId,
           feeStructureIds: formData.feeStructureIds,
           dueDate: formData.dueDate,
           discount: formData.discount ? parseFloat(formData.discount) : 0,
         });
 
-        if (res.success) {
-          toast({
-            title: 'Success',
-            description: 'Invoice generated successfully',
-          });
-        }
+        toast({
+          title: 'Success',
+          description: 'Invoice generated successfully',
+        });
       }
 
       setFormData(initialFormData);
@@ -183,7 +176,7 @@ export default function InvoicesPage() {
       console.error('Error generating invoice:', error);
       toast({
         title: 'Error',
-        description: 'Failed to generate invoice',
+        description: error instanceof Error ? error.message : 'Failed to generate invoice',
         variant: 'destructive',
       });
     } finally {
@@ -197,9 +190,8 @@ export default function InvoicesPage() {
   };
 
   const handleDownloadPDF = async (invoiceId: string) => {
-    if (!accessToken) return;
     try {
-      await financeApi.downloadInvoicePDF(invoiceId, accessToken);
+      await invoicesService.downloadPDF(invoiceId);
       toast({
         title: 'Success',
         description: 'Invoice downloaded successfully',
@@ -208,30 +200,27 @@ export default function InvoicesPage() {
       console.error('Error downloading invoice:', error);
       toast({
         title: 'Error',
-        description: 'Failed to download invoice',
+        description: error instanceof Error ? error.message : 'Failed to download invoice',
         variant: 'destructive',
       });
     }
   };
 
   const handleMarkAsPaid = async (invoiceId: string) => {
-    if (!accessToken) return;
     setIsLoading(true);
     try {
-      const res = await financeApi.updateInvoiceStatus(invoiceId, accessToken, 'PAID');
+      await invoicesService.updateStatus(invoiceId, 'PAID');
 
-      if (res.success) {
-        toast({
-          title: 'Success',
-          description: 'Invoice marked as paid',
-        });
-        fetchInvoices();
-      }
+      toast({
+        title: 'Success',
+        description: 'Invoice marked as paid',
+      });
+      fetchInvoices();
     } catch (error) {
       console.error('Error updating invoice:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update invoice',
+        description: error instanceof Error ? error.message : 'Failed to update invoice',
         variant: 'destructive',
       });
     } finally {
@@ -242,24 +231,21 @@ export default function InvoicesPage() {
 
   const handleCancelInvoice = async (invoiceId: string) => {
     if (!confirm('Are you sure you want to cancel this invoice?')) return;
-    if (!accessToken) return;
 
     setIsLoading(true);
     try {
-      const res = await financeApi.cancelInvoice(invoiceId, accessToken);
+      await invoicesService.cancel(invoiceId);
 
-      if (res.success) {
-        toast({
-          title: 'Success',
-          description: 'Invoice cancelled successfully',
-        });
-        fetchInvoices();
-      }
+      toast({
+        title: 'Success',
+        description: 'Invoice cancelled successfully',
+      });
+      fetchInvoices();
     } catch (error) {
       console.error('Error cancelling invoice:', error);
       toast({
         title: 'Error',
-        description: 'Failed to cancel invoice',
+        description: error instanceof Error ? error.message : 'Failed to cancel invoice',
         variant: 'destructive',
       });
     } finally {

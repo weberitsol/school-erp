@@ -14,8 +14,8 @@ import {
   Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuthStore } from '@/stores/auth.store';
-import { financeApi, FeeStructure } from '@/lib/api';
+import { FeeStructure } from '@/lib/api';
+import { feeStructureService } from '@/services/finance';
 import { useToast } from '@/hooks/use-toast';
 
 type PageMode = 'list' | 'add' | 'edit';
@@ -54,7 +54,6 @@ const frequencyOptions = [
 ];
 
 export default function FeeStructurePage() {
-  const { accessToken } = useAuthStore();
   const { toast } = useToast();
 
   const [mode, setMode] = useState<PageMode>('list');
@@ -70,19 +69,16 @@ export default function FeeStructurePage() {
 
   // Fetch fee structures
   const fetchFeeStructures = useCallback(async () => {
-    if (!accessToken) return;
     setIsLoading(true);
     try {
-      const res = await financeApi.getFeeStructures(accessToken, {
+      const res = await feeStructureService.getAll({
         search: searchTerm || undefined,
         classId: classFilter || undefined,
         page,
         limit: 10,
       });
-      if (res.success && res.data) {
-        setFeeStructures(res.data.data || []);
-        setTotal(res.data.total || 0);
-      }
+      setFeeStructures(res.data || []);
+      setTotal(res.total || 0);
     } catch (error) {
       console.error('Error fetching fee structures:', error);
       toast({
@@ -93,7 +89,7 @@ export default function FeeStructurePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, searchTerm, classFilter, page, toast]);
+  }, [searchTerm, classFilter, page, toast]);
 
   useEffect(() => {
     if (mode === 'list') {
@@ -124,7 +120,6 @@ export default function FeeStructurePage() {
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accessToken) return;
 
     if (!validateForm()) return;
 
@@ -144,29 +139,25 @@ export default function FeeStructurePage() {
       };
 
       if (mode === 'add') {
-        const res = await financeApi.createFeeStructure(accessToken, submitData);
-        if (res.success) {
-          toast({ title: 'Success', description: 'Fee structure created successfully' });
-          setFormData(initialFormData);
-          setMode('list');
-          setPage(0);
-        } else {
-          toast({ title: 'Error', description: res.error || 'Failed to create fee structure', variant: 'destructive' });
-        }
+        await feeStructureService.create(submitData);
+        toast({ title: 'Success', description: 'Fee structure created successfully' });
+        setFormData(initialFormData);
+        setMode('list');
+        setPage(0);
       } else if (mode === 'edit' && selectedFee) {
-        const res = await financeApi.updateFeeStructure(selectedFee.id, accessToken, submitData);
-        if (res.success) {
-          toast({ title: 'Success', description: 'Fee structure updated successfully' });
-          setSelectedFee(null);
-          setFormData(initialFormData);
-          setMode('list');
-        } else {
-          toast({ title: 'Error', description: res.error || 'Failed to update fee structure', variant: 'destructive' });
-        }
+        await feeStructureService.update(selectedFee.id, submitData);
+        toast({ title: 'Success', description: 'Fee structure updated successfully' });
+        setSelectedFee(null);
+        setFormData(initialFormData);
+        setMode('list');
       }
     } catch (error) {
       console.error('Error saving fee structure:', error);
-      toast({ title: 'Error', description: 'Failed to save fee structure', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save fee structure',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -174,21 +165,20 @@ export default function FeeStructurePage() {
 
   // Handle delete
   const handleDelete = async (fee: FeeStructure) => {
-    if (!accessToken) return;
     if (!confirm(`Are you sure you want to delete "${fee.name}"?`)) return;
 
     setIsLoading(true);
     try {
-      const res = await financeApi.deleteFeeStructure(fee.id, accessToken);
-      if (res.success) {
-        toast({ title: 'Success', description: 'Fee structure deleted successfully' });
-        fetchFeeStructures();
-      } else {
-        toast({ title: 'Error', description: res.error || 'Failed to delete fee structure', variant: 'destructive' });
-      }
+      await feeStructureService.delete(fee.id);
+      toast({ title: 'Success', description: 'Fee structure deleted successfully' });
+      fetchFeeStructures();
     } catch (error) {
       console.error('Error deleting fee structure:', error);
-      toast({ title: 'Error', description: 'Failed to delete fee structure', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete fee structure',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }

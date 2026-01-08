@@ -14,8 +14,8 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuthStore } from '@/stores/auth.store';
-import { financeApi, FeePayment, PaymentReport } from '@/lib/api';
+import { FeePayment, PaymentReport } from '@/lib/api';
+import { paymentsService } from '@/services/finance';
 import { useToast } from '@/hooks/use-toast';
 
 type PageMode = 'list' | 'record' | 'details';
@@ -64,7 +64,6 @@ const initialFormData: PaymentFormData = {
 };
 
 export default function PaymentsPage() {
-  const { accessToken } = useAuthStore();
   const { toast } = useToast();
 
   const [mode, setMode] = useState<PageMode>('list');
@@ -90,34 +89,36 @@ export default function PaymentsPage() {
   const [activeTab, setActiveTab] = useState<'list' | 'pending' | 'overdue'>('list');
 
   const fetchPaymentReport = useCallback(async () => {
-    if (!accessToken) return;
     setIsLoading(true);
     try {
-      const res = await financeApi.getPaymentReport(
-        accessToken,
+      const res = await paymentsService.getReport(
         dateFrom || '',
         dateTo || ''
       );
 
-      if (res.success && res.data) {
-        setPaymentReport(res.data);
-        setStats({
-          totalCollected: res.data.summary?.totalCollected || 0,
-          paymentCount: res.data.summary?.paymentCount || 0,
-          pendingDues: 0,
-          overdueAmount: 0,
-        });
-      }
+      setPaymentReport(res);
+      setStats({
+        totalCollected: res.summary?.totalCollected || 0,
+        paymentCount: res.summary?.paymentCount || 0,
+        pendingDues: 0,
+        overdueAmount: 0,
+      });
     } catch (error) {
       console.error('Error fetching payment report:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch payment report',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }, [accessToken, dateFrom, dateTo]);
+  }, [dateFrom, dateTo, toast]);
 
   const fetchPayments = useCallback(async () => {
-    if (!accessToken) return;
     setIsLoading(true);
     try {
-      const res = await financeApi.getPayments(accessToken, {
+      const res = await paymentsService.getAll({
         search: searchTerm || undefined,
         paymentStatus: statusFilter || undefined,
         paymentMethod: methodFilter || undefined,
@@ -127,10 +128,8 @@ export default function PaymentsPage() {
         limit: 10,
       });
 
-      if (res.success && res.data) {
-        setPayments(res.data.data || []);
-        setTotal(res.data.total || 0);
-      }
+      setPayments(res.data || []);
+      setTotal(res.total || 0);
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast({
@@ -141,17 +140,14 @@ export default function PaymentsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, searchTerm, statusFilter, methodFilter, dateFrom, dateTo, page, toast]);
+  }, [searchTerm, statusFilter, methodFilter, dateFrom, dateTo, page, toast]);
 
   const fetchPendingDues = useCallback(async () => {
-    if (!accessToken) return;
     setIsLoading(true);
     try {
-      const res = await financeApi.getPendingDues(accessToken);
-      if (res.success && res.data) {
-        setPayments(res.data);
-        setTotal(res.data.length);
-      }
+      const res = await paymentsService.getPendingDues();
+      setPayments(res || []);
+      setTotal(res?.length || 0);
     } catch (error) {
       console.error('Error fetching pending dues:', error);
       toast({
@@ -162,7 +158,7 @@ export default function PaymentsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, toast]);
+  }, [toast]);
 
   useEffect(() => {
     if (mode === 'list') {
@@ -189,7 +185,6 @@ export default function PaymentsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accessToken) return;
     if (!validateForm()) return;
 
     setIsLoading(true);
@@ -204,23 +199,21 @@ export default function PaymentsPage() {
         discount: formData.discount ? parseFloat(formData.discount) : 0,
       };
 
-      const res = await financeApi.recordPayment(accessToken, submitData);
-      if (res.success) {
-        toast({
-          title: 'Success',
-          description: 'Payment recorded successfully',
-        });
-        setFormData(initialFormData);
-        setFormErrors({});
-        setMode('list');
-        setActiveTab('list');
-        setPage(0);
-      }
+      await paymentsService.recordPayment(submitData);
+      toast({
+        title: 'Success',
+        description: 'Payment recorded successfully',
+      });
+      setFormData(initialFormData);
+      setFormErrors({});
+      setMode('list');
+      setActiveTab('list');
+      setPage(0);
     } catch (error) {
       console.error('Error recording payment:', error);
       toast({
         title: 'Error',
-        description: 'Failed to record payment',
+        description: error instanceof Error ? error.message : 'Failed to record payment',
         variant: 'destructive',
       });
     } finally {
@@ -234,9 +227,8 @@ export default function PaymentsPage() {
   };
 
   const handleDownloadReceipt = async (paymentId: string) => {
-    if (!accessToken) return;
     try {
-      await financeApi.downloadReceiptPDF(paymentId, accessToken);
+      await paymentsService.downloadReceiptPDF(paymentId);
       toast({
         title: 'Success',
         description: 'Receipt downloaded successfully',
@@ -245,7 +237,7 @@ export default function PaymentsPage() {
       console.error('Error downloading receipt:', error);
       toast({
         title: 'Error',
-        description: 'Failed to download receipt',
+        description: error instanceof Error ? error.message : 'Failed to download receipt',
         variant: 'destructive',
       });
     }
