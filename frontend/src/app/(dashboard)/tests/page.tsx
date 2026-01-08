@@ -808,6 +808,7 @@ export default function TestsPage() {
       {/* Generate Question Paper Dialog */}
       {showGenerateDialog && selectedTestForGeneration && (
         <GenerateQuestionPaperDialog
+          isOpen={true}
           testId={selectedTestForGeneration.id}
           testName={selectedTestForGeneration.title}
           onClose={() => setShowGenerateDialog(false)}
