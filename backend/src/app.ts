@@ -50,6 +50,9 @@ import practiceRoutes from './routes/practice.routes';
 // Test Upload Routes (Word file parsing)
 import testUploadRoutes from './routes/test-upload.routes';
 
+// Word Generation Routes (Word document generation)
+import wordGenerationRoutes from './routes/word-generation.routes';
+
 // YouTube Video Learning Routes
 import videoRoutes from './routes/video.routes';
 
@@ -58,6 +61,15 @@ import studyPlannerRoutes from './routes/study-planner.routes';
 
 // Transportation Routes
 import transportationRoutes from './routes/transportation.routes';
+
+// HR Routes
+import hrRoutes from './routes/hr.routes';
+
+// Boarding/Hostel Routes
+import boardingHostelRoutes from './routes/boarding-hostel.routes';
+
+// Advanced Features Routes
+import advancedFeaturesRoutes from './routes/advanced-features.routes';
 
 // Import middleware
 import { errorHandler } from './middleware/error.middleware';
@@ -166,6 +178,9 @@ app.use(`${API_PREFIX}/practice`, practiceRoutes);
 // Test Upload Routes (Word file parsing)
 app.use(`${API_PREFIX}/tests/upload`, testUploadRoutes);
 
+// Word Generation Routes (Word document generation)
+app.use(`${API_PREFIX}/word-generation`, wordGenerationRoutes);
+
 // YouTube Video Learning Routes
 app.use(`${API_PREFIX}/videos`, videoRoutes);
 
@@ -174,6 +189,15 @@ app.use(`${API_PREFIX}/study-planner`, studyPlannerRoutes);
 
 // Transportation Routes
 app.use(`${API_PREFIX}/transportation`, transportationRoutes);
+
+// HR Routes
+app.use(`${API_PREFIX}/hr`, hrRoutes);
+
+// Boarding/Hostel Routes
+app.use(`${API_PREFIX}/boarding`, boardingHostelRoutes);
+
+// Advanced Features Routes
+app.use(`${API_PREFIX}/advanced`, advancedFeaturesRoutes);
 
 // Error handling
 app.use(notFound);

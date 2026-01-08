@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { testUploadService } from '../services/test-upload.service';
 import { wordParserService, ParsedQuestion } from '../services/word-parser.service';
+import { documentStorageService } from '../services/document-storage.service';
 import Anthropic from '@anthropic-ai/sdk';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -14,12 +15,13 @@ const anthropic = new Anthropic({
 
 /**
  * POST /api/tests/upload/parse
- * Upload a Word file and parse it for preview
+ * Upload a Word file, store it, and parse it for preview
  */
 export const uploadAndParse = async (req: Request, res: Response) => {
   try {
     const file = req.file;
-    const { patternId } = req.body;
+    const { patternId, storeInDatabase = true } = req.body;
+    const user = (req as any).user;
 
     if (!file) {
       return res.status(400).json({
@@ -39,18 +41,44 @@ export const uploadAndParse = async (req: Request, res: Response) => {
       });
     }
 
-    const result = await testUploadService.uploadAndParse(
+    console.log(`📄 Processing upload: ${file.originalname} - Store in DB: ${storeInDatabase}`);
+
+    // Store document in database or disk
+    let storedDocument = null;
+    try {
+      storedDocument = await documentStorageService.storeDocument({
+        filePath: file.path,
+        originalName: file.originalname,
+        fileType: ext,
+        fileSize: file.size,
+        uploadedById: user.id,
+        storageType: storeInDatabase ? 'database' : 'disk',
+      });
+      console.log(`✅ Document stored with ID: ${storedDocument.id}`);
+    } catch (storageError) {
+      console.error('⚠️ Warning: Could not store document in database:', storageError);
+      // Don't fail the entire request if storage fails
+    }
+
+    // Parse the document for questions
+    const parseResult = await testUploadService.uploadAndParse(
       { path: file.path, originalname: file.originalname },
       patternId
     );
 
     res.json({
       success: true,
-      data: result,
+      data: {
+        ...parseResult,
+        documentId: storedDocument?.id,
+        storageType: storedDocument?.storageType,
+        hasEmbeddedImages: storedDocument?.hasEmbeddedImages,
+        embeddedImageCount: storedDocument?.imageCount,
+      },
     });
 
   } catch (error: any) {
-    console.error('Upload and parse error:', error);
+    console.error('❌ Upload and parse error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to parse document',

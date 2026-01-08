@@ -1,0 +1,352 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║          WORD DOCUMENT STORAGE & GENERATION SYSTEM ARCHITECTURE              ║
+║                    Phases 1-4 Implementation Complete                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            CLIENT LAYER (Frontend)                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  React App (Next.js 14)                                                      │
+│  ├─ Word Generation Service (Frontend)                                      │
+│  ├─ Document Upload Component                                               │
+│  ├─ Generate Question Paper Dialog                                          │
+│  ├─ Generate Report Card Dialog                                             │
+│  ├─ Generate Certificate Dialog                                             │
+│  └─ Generate Study Material Dialog                                          │
+│                                                                               │
+│  (Phase 5 - To be implemented)                                               │
+│                                                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      ↓
+                          HTTP/REST API (JSON)
+                                      ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      API ROUTES LAYER (Express.js)                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │ Word Generation Routes (/api/v1/word-generation)  [Phase 3-4]       │  │
+│  │ ├─ POST /question-paper          → generateQuestionPaper()          │  │
+│  │ ├─ POST /report-card             → generateReportCard()            │  │
+│  │ ├─ POST /certificate             → generateCertificate()           │  │
+│  │ ├─ POST /study-material          → generateStudyMaterial()         │  │
+│  │ ├─ POST /question-bank-export    → exportQuestionBank()            │  │
+│  │ ├─ GET  /generated-documents     → listGeneratedDocuments()        │  │
+│  │ ├─ GET  /generated-documents/:id/download → downloadGeneratedDocument() │
+│  │ └─ DELETE /generated-documents/:id → deleteGeneratedDocument()     │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │ Document Storage Routes (/api/v1/documents)      [Phase 2]          │  │
+│  │ ├─ GET    /                        → listDocuments()                │  │
+│  │ ├─ GET    /:id/download            → downloadDocument()             │  │
+│  │ ├─ GET    /:id/metadata            → getMetadata()                 │  │
+│  │ ├─ GET    /:id/images              → getDocumentImages()            │  │
+│  │ ├─ GET    /storage/stats           → getStorageStats()             │  │
+│  │ ├─ DELETE /:id                     → deleteDocument()              │  │
+│  │ └─ POST   /:id/migrate-to-db       → migrateToDatabase()           │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      ↓
+                          Middleware: auth, authorize
+                                      ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     CONTROLLER LAYER (Request Handlers)                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  word-generation.controller.ts [400+ lines]                                  │
+│  ├─ generateQuestionPaper(req, res)      → Validates & calls service       │
+│  ├─ generateReportCard(req, res)         → Validates & calls service       │
+│  ├─ generateCertificate(req, res)        → Validates & calls service       │
+│  ├─ generateStudyMaterial(req, res)      → Validates & calls service       │
+│  ├─ exportQuestionBank(req, res)         → Validates & calls service       │
+│  ├─ listGeneratedDocuments(req, res)     → Pagination & filtering          │
+│  ├─ downloadGeneratedDocument(req, res)  → Ownership check & download      │
+│  └─ deleteGeneratedDocument(req, res)    → Ownership check & delete        │
+│                                                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       SERVICE LAYER (Business Logic)                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │ word-generation.service.ts [750+ lines]                              │  │
+│  │ Generates Word documents (.docx) using docx library                  │  │
+│  │                                                                        │  │
+│  │ generateQuestionPaper()     → Creates DOCX with questions & options  │  │
+│  │ generateReportCard()        → Creates DOCX with grades table         │  │
+│  │ generateCertificate()       → Creates DOCX with certificate layout   │  │
+│  │ generateStudyMaterial()     → Creates DOCX with chapter content      │  │
+│  │ exportQuestionBank()        → Creates DOCX with all questions        │  │
+│  │                                                                        │  │
+│  │ Features:                                                             │  │
+│  │ ├─ Single/Double column layouts                                      │  │
+│  │ ├─ Headers and footers                                               │  │
+│  │ ├─ Tables and formatting                                             │  │
+│  │ ├─ Text styling (bold, italic, underline)                            │  │
+│  │ ├─ Page numbering                                                    │  │
+│  │ └─ Returns: Buffer (binary Word document)                            │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │ document-storage.service.ts [560+ lines]                             │  │
+│  │ Manages document storage in DB or disk                               │  │
+│  │                                                                        │  │
+│  │ storeDocument()            → Store with automatic image extraction   │  │
+│  │ getDocument()              → Retrieve from DB or disk                │  │
+│  │ deleteDocument()           → Safe deletion with cascading            │  │
+│  │ getDocumentMetadata()      → Efficient metadata queries              │  │
+│  │ listDocuments()            → Paginated listing                       │  │
+│  │ getDocumentImages()        → Get extracted images                    │  │
+│  │ migrateDocumentToDatabase()→ Disk → DB migration                     │  │
+│  │ exportDocumentToDisk()     → DB → Disk export                        │  │
+│  │ getStorageStats()          → Usage statistics                        │  │
+│  │                                                                        │  │
+│  │ Features:                                                             │  │
+│  │ ├─ Binary storage in BYTEA field                                     │  │
+│  │ ├─ Automatic image extraction from DOCX                              │  │
+│  │ ├─ MIME type detection                                               │  │
+│  │ ├─ Backward compatibility with disk storage                          │  │
+│  │ └─ Cascading deletes for data integrity                              │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         DATA LAYER (Prisma ORM)                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  Prisma Client (ORM)                                                         │
+│  ├─ prisma.generatedDocument                                                │
+│  ├─ prisma.documentImage                                                    │
+│  ├─ prisma.documentTemplate                                                 │
+│  ├─ prisma.uploadedDocument                                                 │
+│  ├─ prisma.onlineTest                                                       │
+│  ├─ prisma.question                                                         │
+│  ├─ prisma.student                                                          │
+│  └─ prisma.examResult                                                       │
+│                                                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    DATABASE LAYER (PostgreSQL)                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │ GeneratedDocument Table [NEW]                                        │  │
+│  │ ├─ id (UUID, PK)                                                     │  │
+│  │ ├─ fileName (VARCHAR)                                                │  │
+│  │ ├─ fileType (VARCHAR) - question_paper, report_card, certificate    │  │
+│  │ ├─ documentData (BYTEA) - Binary Word document                       │  │
+│  │ ├─ columnLayout (VARCHAR) - single or double                         │  │
+│  │ ├─ testId (UUID, FK)                                                 │  │
+│  │ ├─ studentId (UUID, FK)                                              │  │
+│  │ ├─ generatedById (UUID, FK) - User who generated                     │  │
+│  │ ├─ metadata (JSONB)                                                  │  │
+│  │ └─ createdAt (TIMESTAMP)                                             │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │ DocumentImage Table [NEW]                                            │  │
+│  │ ├─ id (UUID, PK)                                                     │  │
+│  │ ├─ documentId (UUID, FK to UploadedDocument) CASCADE DELETE          │  │
+│  │ ├─ imageData (BYTEA) - Binary image data                             │  │
+│  │ ├─ originalFileName (VARCHAR)                                        │  │
+│  │ ├─ mimeType (VARCHAR) - image/png, image/jpeg, etc.                 │  │
+│  │ ├─ fileSize (INT)                                                    │  │
+│  │ ├─ imageOrder (INT) - Position in document                           │  │
+│  │ ├─ relId (VARCHAR)                                                   │  │
+│  │ └─ createdAt (TIMESTAMP)                                             │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │ DocumentTemplate Table [NEW]                                         │  │
+│  │ ├─ id (UUID, PK)                                                     │  │
+│  │ ├─ name (VARCHAR)                                                    │  │
+│  │ ├─ templateType (VARCHAR)                                            │  │
+│  │ ├─ templateData (BYTEA)                                              │  │
+│  │ ├─ defaultColumnLayout (VARCHAR)                                     │  │
+│  │ ├─ schoolId (UUID, FK)                                               │  │
+│  │ ├─ isActive (BOOLEAN)                                                │  │
+│  │ └─ createdAt, updatedAt (TIMESTAMP)                                  │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │ UploadedDocument Table [ENHANCED]                                    │  │
+│  │ ├─ ... (existing fields)                                             │  │
+│  │ ├─ binaryData (BYTEA) [NEW] - Word file content                     │  │
+│  │ ├─ storageType (VARCHAR) [NEW] - "disk" or "database"               │  │
+│  │ ├─ hasEmbeddedImages (BOOLEAN) [NEW]                                 │  │
+│  │ ├─ imageCount (INT) [NEW]                                            │  │
+│  │ └─ images (DocumentImage[]) [NEW] - One-to-many relation            │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+│  Referenced Tables (Existing):                                               │
+│  ├─ OnlineTest                                                              │
+│  ├─ Question                                                                │
+│  ├─ Student                                                                 │
+│  ├─ ExamResult                                                              │
+│  ├─ User                                                                    │
+│  └─ School                                                                  │
+│                                                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          DATA FLOW DIAGRAM                                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+DOCUMENT UPLOAD & STORAGE FLOW (Phase 2):
+──────────────────────────────────────────
+
+1. User uploads DOCX file
+         │
+         ↓
+2. POST /api/v1/tests/upload/parse
+         │
+         ├─→ test-upload.controller.ts
+         │
+         ├─→ document-storage.service.ts
+         │   ├─ Read file into buffer (BYTEA)
+         │   ├─ Extract images from word/media/
+         │   └─ Create DocumentImage records
+         │
+         ├─→ Prisma ORM
+         │   ├─ Create UploadedDocument record
+         │   └─ Create DocumentImage records
+         │
+         ↓
+3. File stored in PostgreSQL (binary data)
+   Images stored separately with CASCADE DELETE
+
+
+DOCUMENT GENERATION FLOW (Phase 3-4):
+──────────────────────────────────────
+
+1. User requests document generation
+   (POST /api/v1/word-generation/question-paper)
+         │
+         ↓
+2. word-generation.controller.ts
+   ├─ Validate request parameters
+   ├─ Call service method
+         │
+         ↓
+3. word-generation.service.ts
+   ├─ Fetch data from database (tests, students, chapters)
+   ├─ Generate Word document using docx library
+   │  ├─ Create sections with layouts
+   │  ├─ Format content (tables, text, styling)
+   │  └─ Set up headers/footers
+   ├─ Convert to Buffer (binary DOCX)
+         │
+         ↓
+4. word-generation.controller.ts
+   ├─ Store Buffer in GeneratedDocument table
+   ├─ Set proper HTTP headers (application/vnd.openxmlformats...)
+   ├─ Send buffer to client
+         │
+         ↓
+5. Word document downloaded to client
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                       COLUMN LAYOUT IMPLEMENTATION                           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+SINGLE COLUMN (Traditional):
+│ Question 1: ... .... .... ...                                                 │
+│                                                                                │
+│ Question 2: ... .... .... ...                                                 │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+DOUBLE COLUMN (Compact):
+│ Question 1: ... | Question 3: ... ... ...                                     │
+│                | ...                                                          │
+│                |                                                              │
+│ Question 2: ... | Question 4: ... ... ...                                     │
+│                | ...                                                          │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+Implementation via docx library:
+```typescript
+columns: {
+  count: 2,
+  space: convertInchesToTwip(0.5),  // 0.5 inch gap
+  equalWidth: true
+}
+```
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         FILE STRUCTURE                                       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+D:\Weber-Campus-Management\school-erp\
+│
+├── backend/
+│   ├── src/
+│   │   ├── services/
+│   │   │   ├── word-generation.service.ts          [750+ lines] ✅
+│   │   │   └── document-storage.service.ts         [560+ lines] ✅
+│   │   │
+│   │   ├── controllers/
+│   │   │   ├── word-generation.controller.ts       [400+ lines] ✅
+│   │   │   └── test-upload.controller.ts           [UPDATED] ✅
+│   │   │
+│   │   ├── routes/
+│   │   │   ├── word-generation.routes.ts           [100+ lines] ✅
+│   │   │   └── document.routes.ts                  [280+ lines] ✅
+│   │   │
+│   │   ├── app.ts                                   [UPDATED] ✅
+│   │   │   ├─ Added import for word-generation routes
+│   │   │   └─ Registered routes at /api/v1/word-generation
+│   │   │
+│   │   └── prisma/
+│   │       └── schema.prisma                        [UPDATED] ✅
+│   │           ├─ Enhanced UploadedDocument model
+│   │           ├─ Added DocumentImage model (NEW)
+│   │           ├─ Added DocumentTemplate model (NEW)
+│   │           └─ Added GeneratedDocument model (NEW)
+│   │
+│   └── package.json                                 [UPDATED] ✅
+│       ├─ Added docx@8.5.0
+│       ├─ Added docxtemplater@3.67.6
+│       └─ Added pizzip@3.2.0
+│
+├── frontend/                                        [Phase 5 - TBD]
+│
+├── PHASES_1-4_COMPLETION_SUMMARY.md                [✅ Created]
+├── QUICK_SETUP_GUIDE.md                            [✅ Created]
+└── ARCHITECTURE_DIAGRAM.txt                        [✅ This file]
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                       DEPLOYMENT CHECKLIST                                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Backend Setup:
+├─ ✅ Install dependencies (docx, docxtemplater, pizzip)
+├─ ✅ Update Prisma schema
+├─ ✅ Sync database (npx prisma db push)
+├─ ✅ Create service files
+├─ ✅ Create controller files
+├─ ✅ Create route files
+└─ ✅ Register routes in app.ts
+
+Verification:
+├─ ✅ All files created and verified
+├─ ✅ Dependencies installed and listed
+├─ ✅ Database schema synced
+├─ ✅ Routes registered
+├─ ✅ TypeScript imports correct
+└─ Ready for testing and frontend integration
+
+
+Generated: January 8, 2025
+Status: ✅ READY FOR TESTING & PHASE 5 IMPLEMENTATION

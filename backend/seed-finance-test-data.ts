@@ -6,12 +6,10 @@ async function main() {
   console.log('🌱 Starting finance test data seed...\n');
 
   // Get the school
-  const school = await prisma.school.findFirst({
-    where: { code: 'WEBER001' }
-  });
+  const school = await prisma.school.findFirst();
 
   if (!school) {
-    console.error('❌ School WEBER001 not found. Please run main seed first.');
+    console.error('❌ No school found. Please run main seed first.');
     process.exit(1);
   }
 

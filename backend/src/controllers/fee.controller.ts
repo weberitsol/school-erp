@@ -61,11 +61,14 @@ export const feeController = {
   async getFeeStructures(req: Request, res: Response) {
     try {
       const schoolId = req.user?.schoolId;
+      console.log('[getFeeStructures] schoolId:', schoolId, 'user:', req.user?.email);
+
       if (!schoolId) {
         return res.status(401).json({ success: false, error: 'School context required' });
       }
 
       const { search, classId, academicYearId, isActive, page, limit } = req.query;
+      console.log('[getFeeStructures] filters:', { search, classId, academicYearId, isActive, page, limit });
 
       const { data, total } = await feeService.getFeeStructures(
         {
@@ -81,6 +84,7 @@ export const feeController = {
         }
       );
 
+      console.log('[getFeeStructures] response:', { totalCount: total, dataCount: data.length });
       res.json({ success: true, data, total });
     } catch (error) {
       console.error('Error fetching fee structures:', error);
