@@ -2,14 +2,14 @@ import { PrismaClient, EmployeePromotion, PromotionStatus } from '@prisma/client
 
 const prisma = new PrismaClient();
 
-interface PromotionFilters {
+export interface PromotionFilters {
   employeeId?: string;
   status?: PromotionStatus;
   fromYear?: number;
   toYear?: number;
 }
 
-interface CreatePromotionData {
+export interface CreatePromotionData {
   employeeId: string;
   previousDesignationId: string;
   newDesignationId: string;
@@ -22,9 +22,10 @@ interface CreatePromotionData {
   approvedById?: string;
   effectiveFrom: Date;
   documentUrl?: string;
+  remarks?: string;
 }
 
-interface UpdatePromotionData {
+export interface UpdatePromotionData {
   newDesignationId?: string;
   newDepartmentId?: string;
   newSalary?: number;
@@ -390,6 +391,20 @@ class EmployeePromotionService {
       averageSalaryIncrease:
         stats.count > 0 ? stats.totalIncrease / stats.count : 0,
     }));
+  }
+
+  async deletePromotion(id: string): Promise<void> {
+    const promotion = await prisma.employeePromotion.findUnique({
+      where: { id },
+    });
+
+    if (!promotion) {
+      throw new Error('Promotion not found');
+    }
+
+    await prisma.employeePromotion.delete({
+      where: { id },
+    });
   }
 }
 

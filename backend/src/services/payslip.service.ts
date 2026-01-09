@@ -1,4 +1,4 @@
-import { PrismaClient, Payslip, PayslipStatus, Decimal } from '@prisma/client';
+import { PrismaClient, Payslip, PayslipStatus } from '@prisma/client';
 import { attendanceService } from './attendance.service';
 
 const prisma = new PrismaClient();
@@ -15,21 +15,21 @@ interface CreatePayslipData {
   month: number;
   year: number;
   basicSalary: number;
-  dearness: number;
-  houseRent: number;
-  conveyance: number;
-  medical: number;
-  otherAllowances: number;
-  grossSalary: number;
-  workingDays: number;
-  daysPresent: number;
-  daysAbsent: number;
-  pf: number;
-  esi: number;
-  professionalTax: number;
-  incomeTax: number;
-  otherDeductions: number;
-  totalDeductions: number;
+  dearness?: number;
+  houseRent?: number;
+  conveyance?: number;
+  medical?: number;
+  otherAllowances?: number;
+  grossSalary?: number;
+  workingDays?: number;
+  daysPresent?: number;
+  daysAbsent?: number;
+  pf?: number;
+  esi?: number;
+  professionalTax?: number;
+  incomeTax?: number;
+  otherDeductions?: number;
+  totalDeductions?: number;
   bonus?: number;
   advance?: number;
   loanDeduction?: number;
@@ -83,38 +83,38 @@ class PayslipService {
     }
 
     // Calculate net payable if not provided
-    const bonus = new Decimal(data.bonus || 0);
-    const advance = new Decimal(data.advance || 0);
-    const loanDeduction = new Decimal(data.loanDeduction || 0);
-    const grossSalary = new Decimal(data.grossSalary);
-    const totalDeductions = new Decimal(data.totalDeductions);
+    const bonus = data.bonus || 0;
+    const advance = data.advance || 0;
+    const loanDeduction = data.loanDeduction || 0;
+    const grossSalary = data.grossSalary || 0;
+    const totalDeductions = data.totalDeductions || 0;
 
-    const netPayable = grossSalary.minus(totalDeductions).plus(bonus).minus(advance).minus(loanDeduction);
+    const netPayable = grossSalary - totalDeductions + bonus - advance - loanDeduction;
 
     return prisma.payslip.create({
       data: {
         employeeId: data.employeeId,
         month: data.month,
         year: data.year,
-        basicSalary: new Decimal(data.basicSalary),
-        dearness: new Decimal(data.dearness),
-        houseRent: new Decimal(data.houseRent),
-        conveyance: new Decimal(data.conveyance),
-        medical: new Decimal(data.medical),
-        otherAllowances: new Decimal(data.otherAllowances),
-        grossSalary: new Decimal(data.grossSalary),
-        workingDays: data.workingDays,
-        daysPresent: data.daysPresent,
-        daysAbsent: data.daysAbsent,
-        pf: new Decimal(data.pf),
-        esi: new Decimal(data.esi),
-        professionalTax: new Decimal(data.professionalTax),
-        incomeTax: new Decimal(data.incomeTax),
-        otherDeductions: new Decimal(data.otherDeductions),
-        totalDeductions: new Decimal(data.totalDeductions),
-        bonus: new Decimal(data.bonus || 0),
-        advance: new Decimal(data.advance || 0),
-        loanDeduction: new Decimal(data.loanDeduction || 0),
+        basicSalary: data.basicSalary,
+        dearness: data.dearness || 0,
+        houseRent: data.houseRent || 0,
+        conveyance: data.conveyance || 0,
+        medical: data.medical || 0,
+        otherAllowances: data.otherAllowances || 0,
+        grossSalary: data.grossSalary || 0,
+        workingDays: data.workingDays || 0,
+        daysPresent: data.daysPresent || 0,
+        daysAbsent: data.daysAbsent || 0,
+        pf: data.pf || 0,
+        esi: data.esi || 0,
+        professionalTax: data.professionalTax || 0,
+        incomeTax: data.incomeTax || 0,
+        otherDeductions: data.otherDeductions || 0,
+        totalDeductions: data.totalDeductions || 0,
+        bonus: bonus,
+        advance: advance,
+        loanDeduction: loanDeduction,
         netPayable,
       },
       include: { employee: true },

@@ -2,13 +2,13 @@ import { PrismaClient, EmployeeSeparation, SeparationType, SettlementStatus, Dec
 
 const prisma = new PrismaClient();
 
-interface SeparationFilters {
+export interface SeparationFilters {
   employeeId?: string;
   separationType?: SeparationType;
   settlementStatus?: SettlementStatus;
 }
 
-interface CreateSeparationData {
+export interface CreateSeparationData {
   employeeId: string;
   separationDate: Date;
   separationType: SeparationType;
@@ -21,7 +21,7 @@ interface CreateSeparationData {
   lastSalaryYear?: number;
 }
 
-interface UpdateSeparationData {
+export interface UpdateSeparationData {
   separationType?: SeparationType;
   reason?: string;
   reasonDescription?: string;
@@ -31,7 +31,7 @@ interface UpdateSeparationData {
   settlementStatus?: SettlementStatus;
 }
 
-interface SettlementCalculationData {
+export interface SettlementCalculationData {
   basicSalaryDue?: number;
   allowancesDue?: number;
   earnedLeavePayout?: number;

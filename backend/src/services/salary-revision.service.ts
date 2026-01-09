@@ -1,4 +1,4 @@
-import { PrismaClient, SalaryRevision, Decimal } from '@prisma/client';
+import { PrismaClient, SalaryRevision } from '@prisma/client';
 
 const prisma = new PrismaClient();
 

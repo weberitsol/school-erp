@@ -1,4 +1,4 @@
-import { PrismaClient, LeaveBalance, Decimal } from '@prisma/client';
+import { PrismaClient, LeaveBalance } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -85,15 +85,15 @@ class LeaveBalanceService {
         employeeId: data.employeeId,
         academicYear: data.academicYear,
         academicYearId: data.academicYearId,
-        casualLeave: new Decimal(data.casualLeave),
-        earnedLeave: new Decimal(data.earnedLeave),
-        medicalLeave: new Decimal(data.medicalLeave),
-        unpaidLeave: new Decimal(data.unpaidLeave || 0),
-        studyLeave: new Decimal(data.studyLeave || 0),
-        maternityLeave: new Decimal(data.maternityLeave || 0),
-        paternityLeave: new Decimal(data.paternityLeave || 0),
-        bereavementLeave: new Decimal(data.bereavementLeave || 0),
-        carryOverDays: new Decimal(data.carryOverDays || 0),
+        casualLeave: data.casualLeave,
+        earnedLeave: data.earnedLeave,
+        medicalLeave: data.medicalLeave,
+        unpaidLeave: data.unpaidLeave || 0,
+        studyLeave: data.studyLeave || 0,
+        maternityLeave: data.maternityLeave || 0,
+        paternityLeave: data.paternityLeave || 0,
+        bereavementLeave: data.bereavementLeave || 0,
+        carryOverDays: data.carryOverDays || 0,
         carryOverExpiry: data.carryOverExpiry,
         lastCalculatedDate: new Date(),
         nextCalculationDate: this.calculateNextCalculationDate(),
@@ -188,36 +188,29 @@ class LeaveBalanceService {
 
     switch (deduction.leaveType) {
       case 'CASUAL':
-        if (balance.casualLeave.toNumber() < deduction.days) {
+        if ((balance.casualLeave as any).toNumber?.() < deduction.days || balance.casualLeave < deduction.days) {
           throw new Error('Insufficient casual leave balance');
         }
-        updateData.casualLeaveUsed = balance.casualLeaveUsed.plus(
-          deduction.days
-        );
+        updateData.casualLeaveUsed = (balance.casualLeaveUsed as any).toNumber?.() ? (balance.casualLeaveUsed as any).toNumber() + deduction.days : (balance.casualLeaveUsed as number) + deduction.days;
         break;
 
       case 'EARNED':
-        if (balance.earnedLeave.toNumber() < deduction.days) {
+        if ((balance.earnedLeave as any).toNumber?.() < deduction.days || balance.earnedLeave < deduction.days) {
           throw new Error('Insufficient earned leave balance');
         }
-        updateData.earnedLeaveUsed = balance.earnedLeaveUsed.plus(
-          deduction.days
-        );
+        updateData.earnedLeaveUsed = (balance.earnedLeaveUsed as any).toNumber?.() ? (balance.earnedLeaveUsed as any).toNumber() + deduction.days : (balance.earnedLeaveUsed as number) + deduction.days;
         break;
 
       case 'MEDICAL':
-        if (balance.medicalLeave.toNumber() < deduction.days) {
+        if ((balance.medicalLeave as any).toNumber?.() < deduction.days || balance.medicalLeave < deduction.days) {
           throw new Error('Insufficient medical leave balance');
         }
-        updateData.medicalLeaveUsed = balance.medicalLeaveUsed.plus(
-          deduction.days
-        );
+        updateData.medicalLeaveUsed = (balance.medicalLeaveUsed as any).toNumber?.() ? (balance.medicalLeaveUsed as any).toNumber() + deduction.days : (balance.medicalLeaveUsed as number) + deduction.days;
         break;
 
       case 'UNPAID':
-        updateData.unpaidLeaveUsed = (balance.unpaidLeaveUsed || new Decimal(0)).plus(
-          deduction.days
-        );
+        const unpaidUsed = (balance.unpaidLeaveUsed as any).toNumber?.() || (balance.unpaidLeaveUsed as number) || 0;
+        updateData.unpaidLeaveUsed = unpaidUsed + deduction.days;
         break;
 
       default:
@@ -245,28 +238,28 @@ class LeaveBalanceService {
       case 'CASUAL':
         updateData.casualLeaveUsed = Math.max(
           0,
-          balance.casualLeaveUsed.toNumber() - restoration.days
+          ((balance.casualLeaveUsed as any).toNumber?.() || balance.casualLeaveUsed as number) - restoration.days
         );
         break;
 
       case 'EARNED':
         updateData.earnedLeaveUsed = Math.max(
           0,
-          balance.earnedLeaveUsed.toNumber() - restoration.days
+          ((balance.earnedLeaveUsed as any).toNumber?.() || balance.earnedLeaveUsed as number) - restoration.days
         );
         break;
 
       case 'MEDICAL':
         updateData.medicalLeaveUsed = Math.max(
           0,
-          balance.medicalLeaveUsed.toNumber() - restoration.days
+          ((balance.medicalLeaveUsed as any).toNumber?.() || balance.medicalLeaveUsed as number) - restoration.days
         );
         break;
 
       case 'UNPAID':
         updateData.unpaidLeaveUsed = Math.max(
           0,
-          (balance.unpaidLeaveUsed || new Decimal(0)).toNumber() - restoration.days
+          (((balance.unpaidLeaveUsed as any).toNumber?.() || (balance.unpaidLeaveUsed as number) || 0) - restoration.days)
         );
         break;
 
@@ -291,13 +284,13 @@ class LeaveBalanceService {
 
     switch (leaveType) {
       case 'CASUAL':
-        return balance.casualLeave.toNumber() - balance.casualLeaveUsed.toNumber();
+        return ((balance.casualLeave as any).toNumber?.() || balance.casualLeave as number) - ((balance.casualLeaveUsed as any).toNumber?.() || balance.casualLeaveUsed as number);
       case 'EARNED':
-        return balance.earnedLeave.toNumber() - balance.earnedLeaveUsed.toNumber();
+        return ((balance.earnedLeave as any).toNumber?.() || balance.earnedLeave as number) - ((balance.earnedLeaveUsed as any).toNumber?.() || balance.earnedLeaveUsed as number);
       case 'MEDICAL':
-        return balance.medicalLeave.toNumber() - balance.medicalLeaveUsed.toNumber();
+        return ((balance.medicalLeave as any).toNumber?.() || balance.medicalLeave as number) - ((balance.medicalLeaveUsed as any).toNumber?.() || balance.medicalLeaveUsed as number);
       case 'UNPAID':
-        return balance.unpaidLeave.toNumber() - (balance.unpaidLeaveUsed?.toNumber() || 0);
+        return ((balance.unpaidLeave as any).toNumber?.() || balance.unpaidLeave as number) - (((balance.unpaidLeaveUsed as any).toNumber?.() || (balance.unpaidLeaveUsed as number)) || 0);
       case 'STUDY':
         return balance.studyLeave.toNumber();
       case 'MATERNITY':
@@ -366,6 +359,20 @@ class LeaveBalanceService {
     const date = new Date();
     date.setMonth(date.getMonth() + 3); // Quarterly calculation
     return date;
+  }
+
+  async deleteLeaveBalance(id: string): Promise<void> {
+    const leaveBalance = await prisma.leaveBalance.findUnique({
+      where: { id },
+    });
+
+    if (!leaveBalance) {
+      throw new Error('Leave balance not found');
+    }
+
+    await prisma.leaveBalance.delete({
+      where: { id },
+    });
   }
 }
 

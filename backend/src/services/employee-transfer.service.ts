@@ -2,14 +2,14 @@ import { PrismaClient, EmployeeTransfer, TransferStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-interface TransferFilters {
+export interface TransferFilters {
   employeeId?: string;
   status?: TransferStatus;
   fromDepartmentId?: string;
   toDepartmentId?: string;
 }
 
-interface CreateTransferData {
+export interface CreateTransferData {
   employeeId: string;
   fromDepartmentId: string;
   toDepartmentId: string;
@@ -21,7 +21,7 @@ interface CreateTransferData {
   transferOrder?: string;
 }
 
-interface UpdateTransferData {
+export interface UpdateTransferData {
   toDepartmentId?: string;
   toLocation?: string;
   transferReason?: string;
@@ -339,6 +339,20 @@ class EmployeeTransferService {
     }
 
     return stats;
+  }
+
+  async deleteTransfer(id: string): Promise<void> {
+    const transfer = await prisma.employeeTransfer.findUnique({
+      where: { id },
+    });
+
+    if (!transfer) {
+      throw new Error('Transfer not found');
+    }
+
+    await prisma.employeeTransfer.delete({
+      where: { id },
+    });
   }
 }
 
