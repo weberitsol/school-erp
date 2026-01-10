@@ -182,10 +182,10 @@ export default function PayslipsPage() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div><span className="font-medium">Employee:</span> {selectedPayslip.employee?.firstName} {selectedPayslip.employee?.lastName}</div>
               <div><span className="font-medium">Month/Year:</span> {selectedPayslip.month}/{selectedPayslip.year}</div>
-              <div><span className="font-medium">Basic Salary:</span> ₹{selectedPayslip.basicSalary.toLocaleString()}</div>
-              <div><span className="font-medium">Gross Salary:</span> ₹{selectedPayslip.grossSalary.toLocaleString()}</div>
-              <div><span className="font-medium">Total Deductions:</span> ₹{selectedPayslip.totalDeductions.toLocaleString()}</div>
-              <div><span className="font-medium">Net Salary:</span> ₹{selectedPayslip.netSalary.toLocaleString()}</div>
+              <div><span className="font-medium">Basic Salary:</span> ₹{(selectedPayslip.basicSalary || 0).toLocaleString()}</div>
+              <div><span className="font-medium">Gross Salary:</span> ₹{(selectedPayslip.grossSalary || 0).toLocaleString()}</div>
+              <div><span className="font-medium">Total Deductions:</span> ₹{(selectedPayslip.totalDeductions || 0).toLocaleString()}</div>
+              <div><span className="font-medium">Net Salary:</span> ₹{(selectedPayslip.netSalary || 0).toLocaleString()}</div>
               <div className="col-span-2"><span className="font-medium">Status:</span> {selectedPayslip.status}</div>
             </div>
             <button
@@ -216,9 +216,9 @@ export default function PayslipsPage() {
                     <td className="px-6 py-4 text-sm font-medium">
                       {p.employee?.firstName} {p.employee?.lastName}
                     </td>
-                    <td className="px-6 py-4 text-sm">₹{p.grossSalary.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-sm">₹{p.totalDeductions.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-sm font-semibold">₹{p.netSalary.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm">₹{(p.grossSalary || 0).toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm">₹{(p.totalDeductions || 0).toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm font-semibold">₹{(p.netSalary || 0).toLocaleString()}</td>
                     <td className="px-6 py-4 text-sm">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                         p.status === 'PAID' ? 'bg-green-100 text-green-800' :

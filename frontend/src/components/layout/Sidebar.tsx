@@ -38,6 +38,7 @@ import {
   Play,
   Video,
   Target,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth.store';
@@ -225,6 +226,26 @@ const navItems: NavItem[] = [
     roles: ['ADMIN'],
     children: [
       { label: 'Room Management', href: '/admin/boarding' },
+    ],
+  },
+  {
+    label: 'Mess Management',
+    icon: UtensilsCrossed,
+    roles: ['ADMIN'],
+    children: [
+      { label: 'Overview', href: '/admin/mess' },
+      { label: 'Food Items', href: '/admin/mess/food-items' },
+      { label: 'Recipes', href: '/admin/mess/recipes' },
+      { label: 'Meal Plans', href: '/admin/mess/meal-plans' },
+      { label: 'Staff', href: '/admin/mess/staff' },
+      { label: 'Allergens', href: '/admin/mess/allergens' },
+      { label: 'Menus', href: '/admin/mess/menus' },
+      { label: 'Meals', href: '/admin/mess/meals' },
+      { label: 'Meal Variants', href: '/admin/mess/meal-variants' },
+      { label: 'Meal Choices', href: '/admin/mess/meal-choices' },
+      { label: 'Student Enrollments', href: '/admin/mess/enrollments' },
+      { label: 'Meal Attendance', href: '/admin/mess/attendance' },
+      { label: 'Holiday Calendar', href: '/admin/mess/holidays' },
     ],
   },
   {

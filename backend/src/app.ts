@@ -68,6 +68,9 @@ import hrRoutes from './routes/hr.routes';
 // Boarding/Hostel Routes
 import boardingHostelRoutes from './routes/boarding-hostel.routes';
 
+// Mess Management Routes
+import messRoutes from './routes/mess.routes';
+
 // Advanced Features Routes
 import advancedFeaturesRoutes from './routes/advanced-features.routes';
 
@@ -91,6 +94,12 @@ app.use(cors({
     'http://localhost:3002',
     'http://localhost:3003',
     'http://localhost:3004',
+    'http://localhost:3005',
+    'http://localhost:3006',
+    'http://localhost:3007',
+    'http://localhost:3008',
+    'http://localhost:3009',
+    'http://localhost:3010',
     process.env.MOBILE_APP_URL || 'exp://localhost:19000',
   ],
   credentials: true,
@@ -195,6 +204,9 @@ app.use(`${API_PREFIX}/hr`, hrRoutes);
 
 // Boarding/Hostel Routes
 app.use(`${API_PREFIX}/boarding`, boardingHostelRoutes);
+
+// Mess Management Routes
+app.use(`${API_PREFIX}/mess`, messRoutes);
 
 // Advanced Features Routes
 app.use(`${API_PREFIX}/advanced`, advancedFeaturesRoutes);

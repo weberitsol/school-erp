@@ -1,0 +1,812 @@
+
+// ==================== MESS MANAGEMENT MODULE - PHASE 1 ====================
+
+// Core Mess Facility
+model Mess {
+  id String @id @default(uuid())
+
+  // Basic Information
+  name String
+  code String
+  description String?
+
+  // Facility Details
+  capacity Int // Max students
+  location String?
+  manager String? // Manager name
+
+  // Contact Information
+  contactPhone String?
+  contactEmail String?
+
+  // Status
+  isActive Boolean @default(true)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Relations
+  mealPlans       MealPlan[]
+  enrollments     MessEnrollment[]
+  menus           Menu[]
+  staff           MessStaff[]
+  hygieneLogs     KitchenHygieneChecklist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([schoolId, code])
+  @@index([schoolId])
+  @@index([isActive])
+}
+
+// Meal Plan Definition
+model MealPlan {
+  id String @id @default(uuid())
+
+  // Basic Information
+  name String
+  description String?
+
+  // Pricing
+  monthlyPrice Decimal @db.Decimal(10, 2)
+  annualPrice Decimal? @db.Decimal(10, 2)
+
+  // Meal Inclusions
+  includeBreakfast Boolean @default(true)
+  includeLunch Boolean @default(true)
+  includeDinner Boolean @default(true)
+  includeSnacks Boolean @default(false)
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Mess Reference
+  messId String
+  mess   Mess @relation(fields: [messId], references: [id], onDelete: Cascade)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Relations
+  enrollments MessEnrollment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([messId])
+  @@index([schoolId])
+  @@index([isActive])
+}
+
+// Food Item Master
+model FoodItem {
+  id String @id @default(uuid())
+
+  // Basic Information
+  name String
+  description String?
+  category String // e.g., Vegetable, Protein, Grain, Spice
+
+  // Nutritional Information
+  caloriesPer100g Decimal? @db.Decimal(8, 2)
+  proteinPer100g Decimal? @db.Decimal(6, 2)
+  carbsPer100g Decimal? @db.Decimal(6, 2)
+  fatPer100g Decimal? @db.Decimal(6, 2)
+
+  // Costing
+  costPerUnit Decimal @db.Decimal(10, 2)
+  unit String // e.g., kg, piece, liter
+
+  // Storage & Shelf Life
+  storageInstructions String?
+  shelfLifeDays Int?
+
+  // Allergen Information
+  allergenIds String[] @default([])
+
+  // Status
+  isActive Boolean @default(true)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Relations
+  recipeIngredients RecipeIngredient[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([schoolId])
+  @@index([category])
+  @@index([isActive])
+}
+
+// Allergen Master
+model Allergen {
+  id String @id @default(uuid())
+
+  // Basic Information
+  name String
+  code String @unique
+  description String?
+
+  // Severity Level
+  severity AllergenSeverity @default(MODERATE)
+
+  // Status
+  isActive Boolean @default(true)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Relations
+  studentAllergies StudentAllergy[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([schoolId, code])
+  @@index([schoolId])
+  @@index([severity])
+}
+
+// Recipe
+model Recipe {
+  id String @id @default(uuid())
+
+  // Basic Information
+  name String
+  description String?
+  cuisineType String?
+
+  // Cooking Details
+  cookingInstructions String?
+  cookingTimeMinutes Int?
+  servings Int @default(100)
+
+  // Cost & Nutrition
+  totalRecipeCost Decimal @db.Decimal(10, 2)
+  caloriesPerServing Decimal? @db.Decimal(8, 2)
+  mealVariantType MealVariantType @default(VEG)
+
+  // Status
+  isActive Boolean @default(true)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Relations
+  ingredients RecipeIngredient[]
+  mealVariants MealVariant[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([schoolId])
+  @@index([mealVariantType])
+  @@index([isActive])
+}
+
+// Recipe Ingredient Linking
+model RecipeIngredient {
+  id String @id @default(uuid())
+
+  // Quantity
+  quantity Decimal @db.Decimal(8, 2)
+  unit String
+
+  // Cost Calculation
+  ingredientCost Decimal @db.Decimal(10, 2)
+
+  // Food Item Reference
+  foodItemId String
+  foodItem   FoodItem @relation(fields: [foodItemId], references: [id], onDelete: Restrict)
+
+  // Recipe Reference
+  recipeId String
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([recipeId, foodItemId])
+  @@index([recipeId])
+  @@index([foodItemId])
+}
+
+// Meal Variant (VEG/NON-VEG/VEGAN)
+model MealVariant {
+  id String @id @default(uuid())
+
+  // Variant Information
+  variantType MealVariantType
+  description String?
+
+  // Cost
+  variantCost Decimal @db.Decimal(10, 2)
+
+  // Status
+  isAvailable Boolean @default(true)
+
+  // Recipe Reference
+  recipeId String
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Relations
+  studentMealChoices StudentMealChoice[]
+  mealAttendances    MealAttendance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([recipeId])
+  @@index([schoolId])
+  @@index([variantType])
+}
+
+// Mess Staff
+model MessStaff {
+  id String @id @default(uuid())
+
+  // Personal Information
+  firstName String
+  lastName String
+  email String?
+  phone String?
+
+  // Employment Details
+  position String
+  department String?
+  dateOfJoining DateTime
+  dateOfLeaving DateTime?
+
+  // Certifications
+  certifications String[]? @default([])
+  trainingsCompleted String[]? @default([])
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Mess Reference
+  messId String
+  mess   Mess @relation(fields: [messId], references: [id], onDelete: Cascade)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([messId])
+  @@index([schoolId])
+  @@index([isActive])
+}
+
+// Student Allergy (Doctor-verified)
+model StudentAllergy {
+  id String @id @default(uuid())
+
+  // Medical Information
+  description String?
+  severity AllergenSeverity @default(MODERATE)
+
+  // Doctor Verification
+  doctorName String?
+  doctorContactNumber String?
+  verificationDocumentUrl String?
+  verificationDate DateTime?
+
+  // Status
+  isVerified Boolean @default(false)
+  isActive Boolean @default(true)
+
+  // Student Reference
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Allergen Reference
+  allergenId String
+  allergen   Allergen @relation(fields: [allergenId], references: [id], onDelete: Restrict)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, allergenId])
+  @@index([studentId])
+  @@index([allergenId])
+  @@index([schoolId])
+  @@index([isVerified])
+}
+
+// Menu (Daily/Weekly)
+model Menu {
+  id String @id @default(uuid())
+
+  // Menu Details
+  date DateTime
+  dayOfWeek DayOfWeek
+  season String?
+
+  // Status
+  status MenuApprovalStatus @default(DRAFT)
+  approvalNotes String?
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Mess Reference
+  messId String
+  mess   Mess @relation(fields: [messId], references: [id], onDelete: Restrict)
+
+  // Relations
+  meals         Meal[]
+  approvals     MenuApproval[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([messId, date])
+  @@index([messId])
+  @@index([schoolId])
+  @@index([date])
+  @@index([status])
+}
+
+// Meal (Breakfast, Lunch, Dinner, Snacks)
+model Meal {
+  id String @id @default(uuid())
+
+  // Meal Information
+  name String
+  mealType String
+  serveTimeStart String?
+  serveTimeEnd String?
+
+  // Status
+  isServing Boolean @default(true)
+
+  // Menu Reference
+  menuId String
+  menu   Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Relations
+  variants       MealVariant[]
+  attendances    MealAttendance[]
+  feedbacks      MealFeedback[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([menuId])
+  @@index([schoolId])
+  @@index([mealType])
+}
+
+// Student Meal Choice (for variant selection)
+model StudentMealChoice {
+  id String @id @default(uuid())
+
+  // Choice Information
+  allergyVerified Boolean @default(false)
+  verificationNotes String?
+
+  // Student Reference
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Variant Reference
+  variantId String
+  variant   MealVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, variantId])
+  @@index([studentId])
+  @@index([variantId])
+}
+
+// Mess Enrollment
+model MessEnrollment {
+  id String @id @default(uuid())
+
+  // Enrollment Details
+  enrollmentDate DateTime
+  startDate DateTime
+  endDate DateTime?
+
+  // Meal Plan Details
+  planId String
+  plan   MealPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  // Dietary Preferences
+  dietaryPreferences String[]? @default([])
+
+  // Status
+  status String @default("ACTIVE")
+
+  // Student Reference
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  // Mess Reference
+  messId String
+  mess   Mess @relation(fields: [messId], references: [id], onDelete: Restrict)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Relations
+  attendances  MealAttendance[]
+  bills        MessBill[]
+  extraMeals   ExtraMealBooking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, messId, enrollmentDate])
+  @@index([studentId])
+  @@index([messId])
+  @@index([schoolId])
+  @@index([status])
+}
+
+// Meal Attendance
+model MealAttendance {
+  id String @id @default(uuid())
+
+  // Attendance Date
+  attendanceDate DateTime
+
+  // Variant Selection
+  variantId String?
+  variant   MealVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  // Status
+  status MealAttendanceStatus @default(PRESENT)
+  allergyVerified Boolean @default(false)
+
+  // Meal Reference
+  mealId String
+  meal   Meal @relation(fields: [mealId], references: [id], onDelete: Restrict)
+
+  // Enrollment Reference
+  enrollmentId String
+  enrollment   MessEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([enrollmentId, mealId])
+  @@index([enrollmentId])
+  @@index([mealId])
+  @@index([schoolId])
+  @@index([attendanceDate])
+}
+
+// Kitchen Hygiene Checklist
+model KitchenHygieneChecklist {
+  id String @id @default(uuid())
+
+  // Check Date
+  checkDate DateTime
+
+  // Inspection Details
+  cleanlinessScore Int @default(0)
+  temperatureControlScore Int @default(0)
+  equipmentMaintenanceScore Int @default(0)
+  storageConditionsScore Int @default(0)
+  waterQualityScore Int @default(0)
+  wasteManagementScore Int @default(0)
+  staffHygieneScore Int @default(0)
+  staffLunchAssistantScore Int @default(0)
+
+  // Overall
+  overallScore Int @default(0)
+  status HygieneCheckStatus @default(PASS)
+
+  // Issues & Corrections
+  issuesIdentified String[]? @default([])
+  correctionDeadline DateTime?
+  correctionStatus String?
+
+  // Inspector Information
+  inspectorName String?
+  inspectorSignature String?
+
+  // Documents
+  photosUrl String[]? @default([])
+
+  // Mess Reference
+  messId String
+  mess   Mess @relation(fields: [messId], references: [id], onDelete: Cascade)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([messId])
+  @@index([schoolId])
+  @@index([checkDate])
+  @@index([overallScore])
+}
+
+// Menu Approval
+model MenuApproval {
+  id String @id @default(uuid())
+
+  // Approval Details
+  proposedDate DateTime
+  approvalDate DateTime?
+  nutritionalCheckDone Boolean @default(false)
+  allergenCheckDone Boolean @default(false)
+
+  // Approval Notes
+  reviewNotes String?
+  approvalNotes String?
+
+  // Status
+  status MenuApprovalStatus @default(DRAFT)
+
+  // Approver Information
+  approverName String?
+  approverRole String?
+
+  // Menu Reference
+  menuId String
+  menu   Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([menuId])
+  @@index([menuId])
+  @@index([schoolId])
+  @@index([status])
+}
+
+// Extra Meal Booking
+model ExtraMealBooking {
+  id String @id @default(uuid())
+
+  // Booking Details
+  bookingDate DateTime
+  mealDate DateTime
+  quantity Int @default(1)
+
+  // Cost
+  unitCost Decimal @db.Decimal(10, 2)
+  totalCost Decimal @db.Decimal(10, 2)
+
+  // Status
+  status String @default("PENDING")
+
+  // Enrollment Reference
+  enrollmentId String
+  enrollment   MessEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([enrollmentId])
+  @@index([schoolId])
+  @@index([mealDate])
+}
+
+// Meal Bill (Monthly billing)
+model MessBill {
+  id String @id @default(uuid())
+
+  // Billing Period
+  billingMonth Int
+  billingYear Int
+
+  // Charges
+  baseMealPlanCost Decimal @db.Decimal(10, 2)
+  additionalCharges Decimal @db.Decimal(10, 2) @default(0)
+  discount Decimal @db.Decimal(10, 2) @default(0)
+  totalAmount Decimal @db.Decimal(10, 2)
+
+  // Payment Status
+  status MessBillStatus @default(PENDING)
+  paidDate DateTime?
+  paidAmount Decimal? @db.Decimal(10, 2)
+
+  // Notes
+  notes String?
+
+  // Enrollment Reference
+  enrollmentId String
+  enrollment   MessEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([enrollmentId, billingMonth, billingYear])
+  @@index([enrollmentId])
+  @@index([schoolId])
+  @@index([status])
+  @@index([billingMonth])
+}
+
+// Meal Feedback
+model MealFeedback {
+  id String @id @default(uuid())
+
+  // Feedback Details
+  rating FeedbackRating
+  comments String?
+
+  // Meal Reference
+  mealId String
+  meal   Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  // Student Reference
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  // Relations
+  actions FeedbackAction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mealId])
+  @@index([studentId])
+  @@index([schoolId])
+}
+
+// Feedback Action (Action tracking)
+model FeedbackAction {
+  id String @id @default(uuid())
+
+  // Action Details
+  actionDescription String
+  actionDate DateTime
+  completionDate DateTime?
+  status String @default("OPEN")
+
+  // Feedback Reference
+  feedbackId String
+  feedback   MealFeedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([feedbackId])
+  @@index([schoolId])
+}
+
+// Mess Complaint
+model MessComplaint {
+  id String @id @default(uuid())
+
+  // Complaint Details
+  title String
+  description String
+  category String?
+
+  // Status
+  status MessComplaintStatus @default(OPEN)
+  resolutionNotes String?
+  resolutionDate DateTime?
+
+  // Student Reference
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([schoolId])
+  @@index([status])
+}
+
+// Vendor/Contractor
+model Vendor {
+  id String @id @default(uuid())
+
+  // Vendor Information
+  name String
+  code String
+  contactPerson String?
+  email String?
+  phone String?
+  address String?
+
+  // Vendor Type
+  vendorType String
+
+  // Performance
+  performanceRating Decimal? @db.Decimal(3, 1)
+  qualityScore Int?
+  deliveryScore Int?
+
+  // Status
+  isActive Boolean @default(true)
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([schoolId, code])
+  @@index([schoolId])
+  @@index([vendorType])
+}
+
+// Holiday Calendar (For meal arrangements)
+model HolidayCalendar {
+  id String @id @default(uuid())
+
+  // Holiday Details
+  date DateTime
+  holidayName String
+  mealArrangement String?
+  notes String?
+
+  // School Reference
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([schoolId, date])
+  @@index([schoolId])
+}
