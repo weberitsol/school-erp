@@ -8,7 +8,7 @@ export const vendorController = {
   async createVendor(req: Request, res: Response) {
     try {
       const { name, code, vendorType, contactPerson, email, phone, address } = req.body;
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
 
       if (!name || !code || !vendorType) {
         return res.status(400).json({
@@ -51,7 +51,7 @@ export const vendorController = {
    */
   async getVendors(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const { vendorType, isActive, skip, take } = req.query;
 
       if (!schoolId) {
@@ -165,7 +165,7 @@ export const vendorController = {
    */
   async getVendorsByType(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const { vendorType } = req.params;
 
       if (!schoolId) {
@@ -192,7 +192,7 @@ export const vendorController = {
    */
   async getActiveVendors(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const { vendorType, skip, take } = req.query;
 
       if (!schoolId) {
@@ -345,7 +345,7 @@ export const vendorController = {
    */
   async getVendorTypes(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
 
       if (!schoolId) {
         return res.status(401).json({
@@ -371,7 +371,7 @@ export const vendorController = {
    */
   async getVendorStats(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
 
       if (!schoolId) {
         return res.status(401).json({
@@ -397,7 +397,7 @@ export const vendorController = {
    */
   async getTopRatedVendors(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const { limit } = req.query;
 
       if (!schoolId) {

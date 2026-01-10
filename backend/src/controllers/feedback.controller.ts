@@ -9,7 +9,7 @@ export const feedbackController = {
   async createFeedback(req: Request, res: Response) {
     try {
       const { mealId, rating, comments } = req.body;
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const studentId = req.user?.id;
 
       if (!mealId || !rating) {
@@ -50,7 +50,7 @@ export const feedbackController = {
    */
   async getFeedback(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const { mealId, studentId, rating, skip, take } = req.query;
 
       if (!schoolId) {
@@ -168,7 +168,7 @@ export const feedbackController = {
    */
   async getSchoolFeedbackStats(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
 
       if (!schoolId) {
         return res.status(401).json({
@@ -194,7 +194,7 @@ export const feedbackController = {
    */
   async getRecentFeedback(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const { limit } = req.query;
 
       if (!schoolId) {
@@ -224,7 +224,7 @@ export const feedbackController = {
    */
   async getStudentFeedback(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const studentId = req.user?.id;
 
       if (!schoolId || !studentId) {
@@ -252,7 +252,7 @@ export const feedbackController = {
   async createFeedbackAction(req: Request, res: Response) {
     try {
       const { feedbackId, actionDescription, actionDate } = req.body;
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
 
       if (!feedbackId || !actionDescription || !actionDate) {
         return res.status(400).json({
@@ -291,7 +291,7 @@ export const feedbackController = {
    */
   async getFeedbackActions(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const { feedbackId, status, skip, take } = req.query;
 
       if (!schoolId) {
@@ -371,7 +371,7 @@ export const feedbackController = {
    */
   async getOpenActions(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
 
       if (!schoolId) {
         return res.status(401).json({
@@ -397,7 +397,7 @@ export const feedbackController = {
    */
   async getActionStats(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
 
       if (!schoolId) {
         return res.status(401).json({

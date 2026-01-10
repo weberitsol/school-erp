@@ -8,7 +8,7 @@ export const messComplaintController = {
   async createComplaint(req: Request, res: Response) {
     try {
       const { title, description, category } = req.body;
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const studentId = req.user?.id;
 
       if (!title || !description) {
@@ -49,7 +49,7 @@ export const messComplaintController = {
    */
   async getComplaints(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const { status, category, studentId, skip, take } = req.query;
 
       if (!schoolId) {
@@ -182,7 +182,7 @@ export const messComplaintController = {
    */
   async getOpenComplaints(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const { category, skip, take } = req.query;
 
       if (!schoolId) {
@@ -214,7 +214,7 @@ export const messComplaintController = {
    */
   async getComplaintsByCategory(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const { category } = req.params;
 
       if (!schoolId) {
@@ -244,7 +244,7 @@ export const messComplaintController = {
    */
   async getStudentComplaints(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
       const studentId = req.user?.id;
 
       if (!schoolId || !studentId) {
@@ -274,7 +274,7 @@ export const messComplaintController = {
    */
   async getCategories(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
 
       if (!schoolId) {
         return res.status(401).json({
@@ -300,7 +300,7 @@ export const messComplaintController = {
    */
   async getComplaintStats(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
 
       if (!schoolId) {
         return res.status(401).json({
@@ -326,7 +326,7 @@ export const messComplaintController = {
    */
   async getComplaintSummary(req: Request, res: Response) {
     try {
-      const schoolId = req.school?.id;
+      const schoolId = req.user?.schoolId;
 
       if (!schoolId) {
         return res.status(401).json({
