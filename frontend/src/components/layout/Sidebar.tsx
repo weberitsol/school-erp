@@ -246,6 +246,11 @@ const navItems: NavItem[] = [
       { label: 'Student Enrollments', href: '/admin/mess/enrollments' },
       { label: 'Meal Attendance', href: '/admin/mess/attendance' },
       { label: 'Holiday Calendar', href: '/admin/mess/holidays' },
+      { label: 'Billing', href: '/admin/mess/billing' },
+      { label: 'Extra Meals', href: '/admin/mess/extra-meals' },
+      { label: 'Feedback', href: '/admin/mess/feedback' },
+      { label: 'Complaints', href: '/admin/mess/complaints' },
+      { label: 'Vendors', href: '/admin/mess/vendors' },
     ],
   },
   {
