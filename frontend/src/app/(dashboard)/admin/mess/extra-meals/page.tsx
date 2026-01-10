@@ -221,54 +221,62 @@ export default function ExtraMealsPage() {
               </tr>
             </thead>
             <tbody>
-              {bookings.map((booking) => (
-                <tr key={booking.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    {booking.enrollment?.student?.firstName} {booking.enrollment?.student?.lastName}
-                  </td>
-                  <td className="px-4 py-3">{extraMealService.formatDate(booking.mealDate)}</td>
-                  <td className="px-4 py-3 text-center">{booking.quantity}</td>
-                  <td className="px-4 py-3 text-right">
-                    {extraMealService.formatCurrency(booking.unitCost)}
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold">
-                    {extraMealService.formatCurrency(booking.totalCost)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-3 py-1 rounded text-sm ${extraMealService.getStatusColor(booking.status)}`}>
-                      {booking.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      {booking.status === 'PENDING' && (
-                        <button
-                          onClick={() => handleApprove(booking.id)}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
-                        >
-                          Approve
-                        </button>
-                      )}
-                      {booking.status === 'APPROVED' && (
-                        <button
-                          onClick={() => handleMarkServed(booking.id)}
-                          className="text-green-600 hover:text-green-800 text-sm"
-                        >
-                          Mark Served
-                        </button>
-                      )}
-                      {booking.status !== 'SERVED' && booking.status !== 'CANCELLED' && (
-                        <button
-                          onClick={() => handleCancel(booking.id)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          Cancel
-                        </button>
-                      )}
-                    </div>
+              {bookings && bookings.length > 0 ? (
+                bookings.map((booking) => (
+                  <tr key={booking.id} className="border-b hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      {booking.enrollment?.student?.firstName} {booking.enrollment?.student?.lastName}
+                    </td>
+                    <td className="px-4 py-3">{extraMealService.formatDate(booking.mealDate)}</td>
+                    <td className="px-4 py-3 text-center">{booking.quantity}</td>
+                    <td className="px-4 py-3 text-right">
+                      {extraMealService.formatCurrency(booking.unitCost)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold">
+                      {extraMealService.formatCurrency(booking.totalCost)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-3 py-1 rounded text-sm ${extraMealService.getStatusColor(booking.status)}`}>
+                        {booking.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        {booking.status === 'PENDING' && (
+                          <button
+                            onClick={() => handleApprove(booking.id)}
+                            className="text-blue-600 hover:text-blue-800 text-sm"
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {booking.status === 'APPROVED' && (
+                          <button
+                            onClick={() => handleMarkServed(booking.id)}
+                            className="text-green-600 hover:text-green-800 text-sm"
+                          >
+                            Mark Served
+                          </button>
+                        )}
+                        {booking.status !== 'SERVED' && booking.status !== 'CANCELLED' && (
+                          <button
+                            onClick={() => handleCancel(booking.id)}
+                            className="text-red-600 hover:text-red-800 text-sm"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                    No extra meal bookings found
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
           <div className="px-4 py-3 text-sm text-gray-600">

@@ -131,7 +131,7 @@ export default function BillingPage() {
       </div>
 
       {/* Statistics Cards */}
-      {stats && (
+      {stats && stats.totalBills > 0 && (
         <div className="grid grid-cols-4 gap-4 mb-6">
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-gray-600 text-sm">Total Bills</div>
@@ -139,18 +139,18 @@ export default function BillingPage() {
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-gray-600 text-sm">Total Amount</div>
-            <div className="text-2xl font-bold">{messBillService.formatCurrency(stats.totalAmount)}</div>
+            <div className="text-2xl font-bold">{messBillService.formatCurrency(Number(stats.totalAmount) || 0)}</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-gray-600 text-sm">Paid Amount</div>
             <div className="text-2xl font-bold text-green-600">
-              {messBillService.formatCurrency(stats.paidAmount)}
+              {messBillService.formatCurrency(Number(stats.paidAmount) || 0)}
             </div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-gray-600 text-sm">Pending Amount</div>
             <div className="text-2xl font-bold text-red-600">
-              {messBillService.formatCurrency(stats.pendingAmount)}
+              {messBillService.formatCurrency(Number(stats.pendingAmount) || 0)}
             </div>
           </div>
         </div>
@@ -269,55 +269,63 @@ export default function BillingPage() {
               </tr>
             </thead>
             <tbody>
-              {bills.map((bill) => (
-                <tr key={bill.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    {bill.enrollment?.student?.firstName} {bill.enrollment?.student?.lastName}
-                  </td>
-                  <td className="px-4 py-3">
-                    {messBillService.getMonthName(bill.billingMonth)} {bill.billingYear}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {messBillService.formatCurrency(bill.baseMealPlanCost)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {messBillService.formatCurrency(bill.additionalCharges)}
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold">
-                    {messBillService.formatCurrency(bill.totalAmount)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {messBillService.formatCurrency(bill.paidAmount || 0)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-3 py-1 rounded text-sm ${messBillService.getStatusColor(bill.status)}`}>
-                      {bill.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      {bill.status !== 'PAID' && (
-                        <button
-                          onClick={() => {
-                            setPaymentData({ ...paymentData, billId: bill.id });
-                          }}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
-                        >
-                          Pay
-                        </button>
-                      )}
-                      {!bill.invoiceId && (
-                        <button
-                          onClick={() => handleSyncToFinance(bill.id)}
-                          className="text-green-600 hover:text-green-800 text-sm"
-                        >
-                          Sync
-                        </button>
-                      )}
-                    </div>
+              {bills && bills.length > 0 ? (
+                bills.map((bill) => (
+                  <tr key={bill.id} className="border-b hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      {bill.enrollment?.student?.firstName} {bill.enrollment?.student?.lastName}
+                    </td>
+                    <td className="px-4 py-3">
+                      {messBillService.getMonthName(bill.billingMonth)} {bill.billingYear}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {messBillService.formatCurrency(bill.baseMealPlanCost)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {messBillService.formatCurrency(bill.additionalCharges)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold">
+                      {messBillService.formatCurrency(bill.totalAmount)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {messBillService.formatCurrency(bill.paidAmount || 0)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-3 py-1 rounded text-sm ${messBillService.getStatusColor(bill.status)}`}>
+                        {bill.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        {bill.status !== 'PAID' && (
+                          <button
+                            onClick={() => {
+                              setPaymentData({ ...paymentData, billId: bill.id });
+                            }}
+                            className="text-blue-600 hover:text-blue-800 text-sm"
+                          >
+                            Pay
+                          </button>
+                        )}
+                        {!bill.invoiceId && (
+                          <button
+                            onClick={() => handleSyncToFinance(bill.id)}
+                            className="text-green-600 hover:text-green-800 text-sm"
+                          >
+                            Sync
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                    No bills found for the selected month/year
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
           <div className="px-4 py-3 text-sm text-gray-600">
