@@ -23,6 +23,10 @@ import { holidayCalendarController } from '../controllers/holiday-calendar.contr
 // Phase 5: Billing & Financial Integration
 import { messBillController } from '../controllers/mess-bill.controller';
 import { extraMealController } from '../controllers/extra-meal.controller';
+// Phase 6: Feedback, Complaints & Vendor Management
+import { feedbackController } from '../controllers/feedback.controller';
+import { messComplaintController } from '../controllers/mess-complaint.controller';
+import { vendorController } from '../controllers/vendor.controller';
 
 const router = Router();
 
@@ -362,5 +366,71 @@ router.delete('/extra-meals/:id', authorize('ADMIN', 'SUPER_ADMIN'), extraMealCo
 router.get('/enrollments/:enrollmentId/extra-meals/cost', extraMealController.getMonthlyExtraMealCost);
 router.put('/extra-meals/:id/approve', authorize('ADMIN', 'SUPER_ADMIN'), extraMealController.approveExtraMeal);
 router.put('/extra-meals/:id/mark-served', authorize('ADMIN', 'SUPER_ADMIN'), extraMealController.markAsServed);
+
+// ============================================================================
+// PHASE 6: FEEDBACK, COMPLAINTS & VENDOR MANAGEMENT
+// ============================================================================
+
+// ============================================================================
+// MEAL FEEDBACK ROUTES
+// ============================================================================
+
+router.post('/feedback', feedbackController.createFeedback);
+router.get('/feedback', feedbackController.getFeedback);
+router.get('/feedback/:id', feedbackController.getFeedbackById);
+router.put('/feedback/:id', feedbackController.updateFeedback);
+router.delete('/feedback/:id', authorize('ADMIN', 'SUPER_ADMIN'), feedbackController.deleteFeedback);
+router.get('/feedback/stats/school', feedbackController.getSchoolFeedbackStats);
+router.get('/feedback/stats/recent', feedbackController.getRecentFeedback);
+router.get('/feedback/stats/meal/:mealId', feedbackController.getMealFeedbackStats);
+router.get('/feedback/student/my-feedback', feedbackController.getStudentFeedback);
+
+// ============================================================================
+// FEEDBACK ACTION ROUTES
+// ============================================================================
+
+router.post('/feedback-actions', authorize('ADMIN', 'SUPER_ADMIN'), feedbackController.createFeedbackAction);
+router.get('/feedback-actions', authorize('ADMIN', 'SUPER_ADMIN'), feedbackController.getFeedbackActions);
+router.put('/feedback-actions/:id', authorize('ADMIN', 'SUPER_ADMIN'), feedbackController.updateFeedbackAction);
+router.put('/feedback-actions/:id/complete', authorize('ADMIN', 'SUPER_ADMIN'), feedbackController.completeFeedbackAction);
+router.get('/feedback-actions/open', authorize('ADMIN', 'SUPER_ADMIN'), feedbackController.getOpenActions);
+router.get('/feedback-actions/stats', authorize('ADMIN', 'SUPER_ADMIN'), feedbackController.getActionStats);
+
+// ============================================================================
+// MESS COMPLAINT ROUTES
+// ============================================================================
+
+router.post('/complaints', messComplaintController.createComplaint);
+router.get('/complaints', messComplaintController.getComplaints);
+router.get('/complaints/:id', messComplaintController.getComplaintById);
+router.put('/complaints/:id', messComplaintController.updateComplaint);
+router.put('/complaints/:id/status', authorize('ADMIN', 'SUPER_ADMIN'), messComplaintController.updateComplaintStatus);
+router.delete('/complaints/:id', authorize('ADMIN', 'SUPER_ADMIN'), messComplaintController.deleteComplaint);
+router.get('/complaints/open/list', authorize('ADMIN', 'SUPER_ADMIN'), messComplaintController.getOpenComplaints);
+router.get('/complaints/category/:category', messComplaintController.getComplaintsByCategory);
+router.get('/complaints/student/my-complaints', messComplaintController.getStudentComplaints);
+router.get('/complaints/categories/list', messComplaintController.getCategories);
+router.get('/complaints/stats/summary', authorize('ADMIN', 'SUPER_ADMIN'), messComplaintController.getComplaintStats);
+router.get('/complaints/stats/breakdown', authorize('ADMIN', 'SUPER_ADMIN'), messComplaintController.getComplaintSummary);
+
+// ============================================================================
+// VENDOR MANAGEMENT ROUTES
+// ============================================================================
+
+router.post('/vendors', authorize('ADMIN', 'SUPER_ADMIN'), vendorController.createVendor);
+router.get('/vendors', vendorController.getVendors);
+router.get('/vendors/:id', vendorController.getVendorById);
+router.put('/vendors/:id', authorize('ADMIN', 'SUPER_ADMIN'), vendorController.updateVendor);
+router.delete('/vendors/:id', authorize('ADMIN', 'SUPER_ADMIN'), vendorController.deleteVendor);
+router.get('/vendors/type/:vendorType', vendorController.getVendorsByType);
+router.get('/vendors/active/list', vendorController.getActiveVendors);
+router.put('/vendors/:id/deactivate', authorize('ADMIN', 'SUPER_ADMIN'), vendorController.deactivateVendor);
+router.put('/vendors/:id/reactivate', authorize('ADMIN', 'SUPER_ADMIN'), vendorController.reactivateVendor);
+router.put('/vendors/:id/performance-rating', authorize('ADMIN', 'SUPER_ADMIN'), vendorController.updatePerformanceRating);
+router.put('/vendors/:id/quality-score', authorize('ADMIN', 'SUPER_ADMIN'), vendorController.updateQualityScore);
+router.put('/vendors/:id/delivery-score', authorize('ADMIN', 'SUPER_ADMIN'), vendorController.updateDeliveryScore);
+router.get('/vendors/types/list', vendorController.getVendorTypes);
+router.get('/vendors/stats/summary', authorize('ADMIN', 'SUPER_ADMIN'), vendorController.getVendorStats);
+router.get('/vendors/top-rated/list', vendorController.getTopRatedVendors);
 
 export default router;
